@@ -1,0 +1,12 @@
+# Build output
+bin/
+obj/
+dist/
+TestResults/
+*.user
+*.suo
+.vs/
+.idea/
+
+# Local test artifacts
+*.tmp
