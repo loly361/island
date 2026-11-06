@@ -478,10 +478,11 @@ public class SettingsCopyTests
     public void CopyFrom_ReplacesEveryValue()
     {
         var target = new Settings { City = "Old", NotifyToken = "a" };
-        var source = new Settings { City = "New", NotifyToken = "b", AccentHex = "#0A84FF", SearchUrl = "https://www.google.com/search?q={0}" };
+        var source = new Settings { City = "New", NotifyToken = "b", AccentHex = "#0A84FF", SearchUrl = "https://www.google.com/search?q={0}", Mode = Settings.ModeMinimal };
 
         target.CopyFrom(source);
 
+        Assert.Equal(Settings.ModeMinimal, target.Mode);
         Assert.Equal("New", target.City);
         Assert.Equal("b", target.NotifyToken);
         Assert.Equal("#0A84FF", target.AccentHex);

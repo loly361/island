@@ -65,6 +65,8 @@ public partial class IslandWindow
 
         _settings.CopyFrom(fresh);
         _ = RefreshAccentAsync(animate: true);
+        RenderModeButtons();
+        ApplyMode();
     }
 
     private void RenderSettings()
@@ -77,6 +79,39 @@ public partial class IslandWindow
         SetPort.Text = $"Порт уведомлений {_settings.NotifyPort} нужен для хука Claude Code. Меняется в settings.json, после этого нужен перезапуск.";
         SetHint.Visibility = Visibility.Collapsed;
         BuildAccentSwatches();
+        RenderModeButtons();
+    }
+
+    private void RenderModeButtons()
+    {
+        var minimal = Minimal;
+        StyleModeButton(ModeStandardButton, !minimal);
+        StyleModeButton(ModeMinimalButton, minimal);
+    }
+
+    /// <summary>The active mode is filled with the accent colour; resource references keep it in step with accent changes.</summary>
+    private static void StyleModeButton(Button button, bool selected)
+    {
+        if (selected)
+        {
+            button.SetResourceReference(Control.BackgroundProperty, "AccentBrush");
+            button.Foreground = Brushes.White;
+        }
+        else
+        {
+            button.SetResourceReference(Control.BackgroundProperty, "Surface2");
+            button.SetResourceReference(Control.ForegroundProperty, "TextBrush");
+        }
+    }
+
+    private void Mode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string mode }) return;
+
+        _settings.Mode = mode;
+        JsonStore.Save(AppPaths.File("settings.json"), _settings);
+        RenderModeButtons();
+        ApplyMode();
     }
 
     private void BuildAccentSwatches()

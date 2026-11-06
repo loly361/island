@@ -4,6 +4,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Windows;
+using System.Windows.Media.Animation;
+using Island.Interop;
 using Island.Services;
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
@@ -26,6 +28,11 @@ public partial class App : Application
         }
 
         base.OnStartup(e);
+
+        // WPF animates at 60 fps by default; on a fast monitor that looks stepped, so match the display's refresh rate.
+        Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline),
+            new FrameworkPropertyMetadata { DefaultValue = Native.DisplayRefreshRate() });
+
         DispatcherUnhandledException += (_, args) =>
         {
             LogError(args.Exception);

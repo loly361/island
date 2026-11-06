@@ -25,6 +25,11 @@ public sealed class Settings
     public string? AccentHex { get; set; }
     /// <summary>Shared secret that programs must send to POST /notify; generated on first run.</summary>
     public string NotifyToken { get; set; } = "";
+    /// <summary>"standard" shows the full pill; "minimal" collapses to a small circle that opens on hover.</summary>
+    public string Mode { get; set; } = ModeStandard;
+
+    public const string ModeStandard = "standard";
+    public const string ModeMinimal = "minimal";
 
     /// <summary>Replaces every value with the other instance's, so the open window sees edits made on disk.</summary>
     public void CopyFrom(Settings other)
@@ -38,6 +43,7 @@ public sealed class Settings
         NotificationsEnabled = other.NotificationsEnabled;
         AccentHex = other.AccentHex;
         NotifyToken = other.NotifyToken;
+        Mode = other.Mode;
         Shortcuts = other.Shortcuts;
     }
     public List<AppShortcut> Shortcuts { get; set; } = new()

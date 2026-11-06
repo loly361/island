@@ -38,6 +38,26 @@ internal static class Native
     [DllImport("user32.dll")] public static extern int SetWindowLong(IntPtr hWnd, int index, int value);
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
+    [DllImport("user32.dll")] private static extern IntPtr GetDC(IntPtr hWnd);
+    [DllImport("user32.dll")] private static extern int ReleaseDC(IntPtr hWnd, IntPtr hdc);
+    [DllImport("gdi32.dll")] private static extern int GetDeviceCaps(IntPtr hdc, int index);
+
+    private const int VREFRESH = 116;
+
+    /// <summary>Refresh rate of the primary display in Hz, or 60 when Windows reports a placeholder (0 or 1).</summary>
+    public static int DisplayRefreshRate()
+    {
+        var hdc = GetDC(IntPtr.Zero);
+        try
+        {
+            var hz = GetDeviceCaps(hdc, VREFRESH);
+            return hz > 1 ? hz : 60;
+        }
+        finally
+        {
+            ReleaseDC(IntPtr.Zero, hdc);
+        }
+    }
 
     private const byte VK_CONTROL = 0x11;
     private const byte VK_V = 0x56;

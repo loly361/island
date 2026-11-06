@@ -18,18 +18,58 @@
         <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF"/>
         <SolidColorBrush x:Key="TimerBrush" Color="#FF9F0A"/>
         <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+        <!-- Concentric radii: the panel is 34, cards inset by 14 get 22, rows and tiles inside cards get 14. -->
+        <CornerRadius x:Key="CardRadius">22</CornerRadius>
+        <CornerRadius x:Key="RowRadius">14</CornerRadius>
+
+        <!-- 3D icons: each glyph is lit from above (light top, darker bottom) and casts a soft shadow underneath. -->
+        <LinearGradientBrush x:Key="IconFill" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#FFFFFF" Offset="0.35"/>
+            <GradientStop Color="#6F82A0" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="IconLit" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#FFFFFF" Offset="0.2"/>
+            <GradientStop Color="#C9D6EA" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="IconDim" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#E6EDF7" Offset="0.35"/>
+            <GradientStop Color="#3F4D63" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="IconFaint" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#70FFFFFF" Offset="0.4"/>
+            <GradientStop Color="#2A9FB2C9" Offset="1"/>
+        </LinearGradientBrush>
+        <DropShadowEffect x:Key="IconShadow" Direction="90" ShadowDepth="2" BlurRadius="1.5" Opacity="0.85" Color="#000000"/>
+        <DropShadowEffect x:Key="IconBadgeShadow" Direction="90" ShadowDepth="2" BlurRadius="6" Opacity="0.4" Color="#000000"/>
+
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource SubBrush}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Shown over an empty list: a large faint glyph and one line of text. -->
+        <Style x:Key="EmptyGlyph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+            <Setter Property="FontSize" Value="30"/>
+            <Setter Property="Foreground" Value="{StaticResource IconFaint}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
 
         <Style x:Key="Glyph" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
             <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource IconFill}"/>
+            <Setter Property="Effect" Value="{StaticResource IconShadow}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
         <Style x:Key="IconBtn" TargetType="Button">
             <Setter Property="Width" Value="32"/>
             <Setter Property="Height" Value="32"/>
-            <Setter Property="Foreground" Value="{StaticResource SubBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource IconDim}"/>
+            <Setter Property="Effect" Value="{StaticResource IconShadow}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
@@ -44,7 +84,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="b" Property="Background" Value="{StaticResource Surface2}"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Foreground" Value="{StaticResource IconLit}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Trigger.EnterActions>
@@ -70,7 +110,8 @@
             <Setter Property="Width" Value="38"/>
             <Setter Property="Height" Value="32"/>
             <Setter Property="Margin" Value="0,0,2,0"/>
-            <Setter Property="Foreground" Value="{StaticResource SubBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource IconDim}"/>
+            <Setter Property="Effect" Value="{StaticResource IconShadow}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
@@ -84,11 +125,11 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="b" Property="Background" Value="{StaticResource Surface}"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Foreground" Value="{StaticResource IconLit}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="b" Property="Background" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Foreground" Value="{StaticResource IconLit}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -141,7 +182,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="b" Background="{StaticResource Surface}" CornerRadius="24" Padding="14" RenderTransformOrigin="0.5,0.5">
+                        <Border x:Name="b" Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,10" RenderTransformOrigin="0.5,0.5">
                             <Border.RenderTransform><ScaleTransform x:Name="sc"/></Border.RenderTransform>
                             <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                         </Border>
@@ -414,6 +455,28 @@
             </Setter>
         </Style>
 
+        <!-- Each row is its own small card; the container owns hover and keyboard selection so rows stay plain. -->
+        <Style x:Key="CardItem" TargetType="ListBoxItem">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="bd" Background="{StaticResource Surface}" CornerRadius="{StaticResource RowRadius}" Margin="0,0,0,6">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Surface2}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="ChipItem" TargetType="ListBoxItem">
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="Template">
@@ -444,6 +507,10 @@
             <Setter Property="ItemContainerStyle" Value="{StaticResource ListItem}"/>
         </Style>
 
+        <Style x:Key="CardList" TargetType="ListBox" BasedOn="{StaticResource PlainList}">
+            <Setter Property="ItemContainerStyle" Value="{StaticResource CardItem}"/>
+        </Style>
+
         <Style x:Key="ChipList" TargetType="ListBox">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -461,7 +528,7 @@
         </Style>
 
         <DataTemplate x:Key="ClipRowTemplate">
-            <Border x:Name="Row" Background="Transparent" CornerRadius="10" Padding="10,7" Cursor="Hand"
+            <Border x:Name="Row" Background="Transparent" CornerRadius="{StaticResource RowRadius}" Padding="10,8" Cursor="Hand"
                     MouseLeftButtonUp="ClipRow_Click">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -507,15 +574,10 @@
                     </StackPanel>
                 </Grid>
             </Border>
-            <DataTemplate.Triggers>
-                <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Row" Property="Background" Value="{StaticResource HoverBrush}"/>
-                </Trigger>
-            </DataTemplate.Triggers>
         </DataTemplate>
 
         <DataTemplate x:Key="SearchRowTemplate">
-            <Border Background="Transparent" Padding="10,8" Cursor="Hand" MouseLeftButtonUp="SearchRow_Click">
+            <Border Background="Transparent" CornerRadius="{StaticResource RowRadius}" Padding="12,10" Cursor="Hand" MouseLeftButtonUp="SearchRow_Click">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -550,14 +612,15 @@
         </DataTemplate>
 
         <DataTemplate x:Key="InboxRowTemplate">
-            <Grid Margin="8,7">
+            <Grid Margin="12,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Border Width="36" Height="36" CornerRadius="11" Background="{StaticResource Surface2}" VerticalAlignment="Top">
-                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE7ED;" FontSize="14" Foreground="#8C8CFF" HorizontalAlignment="Center"/>
-                </Border>
+                <Grid Width="36" Height="36" VerticalAlignment="Top">
+                    <Border CornerRadius="11" Background="{DynamicResource AccentBrush}" Opacity="0.22"/>
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xEA8F;" FontSize="14" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"/>
+                </Grid>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                     <TextBlock Text="{Binding Title}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding Body}" Foreground="{StaticResource SubBrush}" FontSize="12" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="34"/>
@@ -567,11 +630,19 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Border x:Name="Pill" Width="190" Height="34" HorizontalAlignment="Center" VerticalAlignment="Top"
-            Background="{StaticResource Bg}" CornerRadius="0,0,18,18" ClipToBounds="True">
+    <!-- The pill is always laid out at its largest size; a clip shows the current shape. Resizing a clip costs no layout pass. -->
+    <Border x:Name="Pill" Width="600" Height="395" HorizontalAlignment="Center" VerticalAlignment="Top"
+            Background="{StaticResource Bg}" ClipToBounds="True">
+        <Border.Clip>
+            <RectangleGeometry x:Name="PillClip" Rect="205,-40,190,74" RadiusX="18" RadiusY="18"/>
+        </Border.Clip>
         <Grid>
+            <!-- Minimal mode: the resting circle shows a single accent dot -->
+            <Ellipse x:Name="MinimalDot" Width="6" Height="6" Margin="0,12,0,0" HorizontalAlignment="Center" VerticalAlignment="Top"
+                     Fill="{DynamicResource AccentBrush}" IsHitTestVisible="False" Visibility="Collapsed" Opacity="0"/>
+
             <!-- Collapsed: clock and weather -->
-            <StackPanel x:Name="CollapsedView" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel x:Name="CollapsedView" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Height="34">
                 <ContentControl x:Name="WeatherIconHost" Width="17" Height="17" Margin="0,0,7,0" VerticalAlignment="Center" Focusable="False"/>
                 <TextBlock x:Name="TimeText" Foreground="{StaticResource TextBrush}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 <TextBlock x:Name="TempText" Foreground="{StaticResource SubBrush}" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
@@ -587,7 +658,7 @@
             </StackPanel>
 
             <!-- Alert: notifications, reminders and tool results -->
-            <Grid x:Name="AlertView" Margin="14,0" Visibility="Collapsed" Opacity="0">
+            <Grid x:Name="AlertView" Width="390" Height="62" Margin="14,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed" Opacity="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -602,7 +673,7 @@
             </Grid>
 
             <!-- Expanded panel -->
-            <Grid x:Name="ExpandedView" Visibility="Collapsed" Opacity="0" RenderTransformOrigin="0.5,0">
+            <Grid x:Name="ExpandedView" VerticalAlignment="Top" Height="345" Visibility="Collapsed" Opacity="0" RenderTransformOrigin="0.5,0">
                 <Grid.RenderTransform><ScaleTransform x:Name="ExpandedScale"/></Grid.RenderTransform>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="46"/>
@@ -617,7 +688,7 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                         <RadioButton x:Name="TabHome" Style="{StaticResource TabBtn}" Content="&#xE80F;" Tag="0" ToolTip="Главная" IsChecked="True" Checked="Tab_Checked"/>
                         <RadioButton x:Name="TabClip" Style="{StaticResource TabBtn}" Content="&#xE77F;" Tag="1" ToolTip="Буфер обмена" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabInbox" Style="{StaticResource TabBtn}" Content="&#xE7ED;" Tag="2" ToolTip="Уведомления" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabInbox" Style="{StaticResource TabBtn}" Content="&#xEA8F;" Tag="2" ToolTip="Уведомления" Checked="Tab_Checked"/>
                         <RadioButton x:Name="TabNotes" Style="{StaticResource TabBtn}" Content="&#xE70F;" Tag="3" ToolTip="Заметки, таймер и напоминания" Checked="Tab_Checked"/>
                         <RadioButton x:Name="TabWeather" Style="{StaticResource TabBtn}" Content="&#xE706;" Tag="4" ToolTip="Погода" Checked="Tab_Checked"/>
                         <RadioButton x:Name="TabControl" Style="{StaticResource TabBtn}" Content="&#xE9E9;" Tag="5" ToolTip="Управление" Checked="Tab_Checked"/>
@@ -642,7 +713,7 @@
                                 <ColumnDefinition Width="1.4*"/>
                                 <ColumnDefinition Width="1*"/>
                             </Grid.ColumnDefinitions>
-                            <Border Background="{StaticResource Surface}" CornerRadius="26" Padding="16" Margin="0,0,6,0">
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="16" Margin="0,0,6,0">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -718,7 +789,7 @@
                             <TextBlock x:Name="VolDevice" Grid.Column="3" Foreground="{StaticResource SubBrush}" FontSize="11" MaxWidth="150" TextTrimming="CharacterEllipsis" Margin="10,0,0,0" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <Border Grid.Row="2" Background="{StaticResource Surface}" CornerRadius="22" Padding="6" Margin="0,12,0,0">
+                        <Border Grid.Row="2" Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="6" Margin="0,12,0,0">
                             <Grid>
                                 <StackPanel x:Name="ShortcutsPanel" Orientation="Horizontal"/>
                                 <TextBlock x:Name="HotkeyHint" Foreground="{StaticResource SubBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -741,8 +812,11 @@
                             <TextBox x:Name="ClipSearch" Style="{StaticResource InputBox}" Tag="Поиск по буферу" TextChanged="ClipSearch_TextChanged"/>
                             <Button Grid.Column="1" Style="{StaticResource IconBtn}" Content="&#xE74D;" Width="40" Height="40" Margin="6,0,0,0" ToolTip="Очистить (закреплённые остаются)" Click="ClipClear_Click"/>
                         </Grid>
-                        <ListBox x:Name="ClipList" Grid.Row="1" Style="{StaticResource PlainList}" Margin="0,8,0,0" ItemTemplate="{StaticResource ClipRowTemplate}"/>
-                        <TextBlock x:Name="ClipEmpty" Grid.Row="1" Text="Здесь появится всё, что вы копируете" Foreground="{StaticResource SubBrush}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        <ListBox x:Name="ClipList" Grid.Row="1" Style="{StaticResource CardList}" Margin="0,10,0,0" ItemTemplate="{StaticResource ClipRowTemplate}"/>
+                        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding Visibility, ElementName=ClipEmpty}">
+                            <TextBlock Style="{StaticResource EmptyGlyph}" Text="&#xE77F;"/>
+                            <TextBlock x:Name="ClipEmpty" Text="Здесь появится всё, что вы копируете" Foreground="{StaticResource SubBrush}" FontSize="12" HorizontalAlignment="Center" Visibility="Collapsed"/>
+                        </StackPanel>
                         <TextBlock Grid.Row="2" Text="Клик — вставить · Shift+клик — только копировать" Foreground="{StaticResource SubBrush}" FontSize="11" Margin="2,8,0,0"/>
                     </Grid>
 
@@ -756,8 +830,11 @@
                             <TextBlock Text="Уведомления Windows" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             <Button Style="{StaticResource IconBtn}" Content="&#xE74D;" HorizontalAlignment="Right" Width="30" Height="28" ToolTip="Очистить список (в Windows уведомления остаются)" Click="InboxClear_Click"/>
                         </Grid>
-                        <ListBox x:Name="InboxList" Grid.Row="1" Style="{StaticResource PlainList}" ItemTemplate="{StaticResource InboxRowTemplate}"/>
-                        <TextBlock x:Name="InboxEmpty" Grid.Row="1" Foreground="{StaticResource SubBrush}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="360"/>
+                        <ListBox x:Name="InboxList" Grid.Row="1" Style="{StaticResource CardList}" ItemTemplate="{StaticResource InboxRowTemplate}"/>
+                        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding Visibility, ElementName=InboxEmpty}">
+                            <TextBlock Style="{StaticResource EmptyGlyph}" Text="&#xEA8F;"/>
+                            <TextBlock x:Name="InboxEmpty" Foreground="{StaticResource SubBrush}" FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="360"/>
+                        </StackPanel>
                     </Grid>
 
                     <!-- NOTES, TIMER, REMINDERS -->
@@ -777,7 +854,7 @@
                                 <Button DockPanel.Dock="Right" Style="{StaticResource IconBtn}" Content="&#xE710;" Width="28" Height="28" ToolTip="Новая заметка" Click="NoteNew_Click"/>
                                 <ListBox x:Name="NotesList" Style="{StaticResource ChipList}" ItemTemplate="{StaticResource NoteRowTemplate}" SelectionChanged="NotesList_SelectionChanged"/>
                             </DockPanel>
-                            <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="22" Padding="12,10">
+                            <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="12,10">
                                 <Grid>
                                     <RichTextBox x:Name="NoteEditor" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextBrush}"
                                                  CaretBrush="White" SelectionBrush="{DynamicResource AccentBrush}" FontSize="13" AcceptsTab="True"
@@ -790,6 +867,7 @@
                                             </Style>
                                         </RichTextBox.Resources>
                                     </RichTextBox>
+                                    <TextBlock x:Name="NotePlaceholder" Text="Начните писать…" Foreground="#59FFFFFF" FontSize="13" Margin="2,0,0,0" IsHitTestVisible="False" Visibility="Collapsed"/>
                                     <TextBlock x:Name="NotesEmpty" Text="Нажмите + и создайте заметку" Foreground="{StaticResource SubBrush}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                                 </Grid>
                             </Border>
@@ -810,7 +888,7 @@
                                         <TextBlock Text="☑" FontFamily="Segoe UI Symbol" FontSize="14"/>
                                     </Button>
                                     <Border Width="1" Margin="4,6" Background="#26FFFFFF"/>
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xE7ED;" ToolTip="Напомнить об этой заметке" Click="NoteRemind_Click"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="&#xEA8F;" ToolTip="Напомнить об этой заметке" Click="NoteRemind_Click"/>
                                     <Button Style="{StaticResource FmtBtn}" Content="&#xE8C8;" ToolTip="Скопировать заметку" Click="NoteCopy_Click"/>
                                     <Button Style="{StaticResource FmtBtn}" Content="&#xE74D;" ToolTip="Удалить заметку" Click="NoteDelete_Click"/>
                                 </StackPanel>
@@ -822,7 +900,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Border Background="{StaticResource Surface}" CornerRadius="24" Padding="12">
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="12">
                                 <StackPanel>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -857,7 +935,7 @@
                                     <TextBox x:Name="TimerCustom" Style="{StaticResource PlainInput}" Tag="Минут и Enter" Margin="0,8,0,0" Visibility="Collapsed" KeyDown="TimerCustom_KeyDown"/>
                                 </StackPanel>
                             </Border>
-                            <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="24" Padding="12" Margin="0,8,0,0">
+                            <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="12" Margin="0,8,0,0">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -866,7 +944,7 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE7ED;" FontSize="12" Foreground="{StaticResource SubBrush}"/>
+                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xEA8F;" FontSize="12" Foreground="{StaticResource SubBrush}"/>
                                         <TextBlock Text="Напоминания" Foreground="{StaticResource TextBrush}" FontSize="12" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <ListBox x:Name="ReminderList" Grid.Row="1" Style="{StaticResource PlainList}" ItemTemplate="{StaticResource ReminderRowTemplate}" Margin="0,4,0,4"/>
@@ -885,7 +963,7 @@
                             <ColumnDefinition Width="205"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border x:Name="WxCard" CornerRadius="26" Padding="16,12" Margin="0,0,8,0" Background="#2F6FD0">
+                        <Border x:Name="WxCard" CornerRadius="{StaticResource CardRadius}" Padding="16,12" Margin="0,0,8,0" Background="#2F6FD0">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -907,17 +985,26 @@
                                     <ContentControl x:Name="WxIcon" Width="40" Height="40" VerticalAlignment="Center" Focusable="False"/>
                                     <TextBlock x:Name="WxTemp" Foreground="White" FontSize="54" FontWeight="Light" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <TextBlock x:Name="WxDesc" Grid.Row="2" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                                <TextBlock x:Name="WxDesc" Grid.Row="2" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                 <TextBlock x:Name="WxFeels" Grid.Row="3" Foreground="#D9FFFFFF" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                 <UniformGrid Grid.Row="5" Columns="3" Margin="0,8,0,0">
-                                    <Border Background="#33FFFFFF" CornerRadius="10" Padding="4,6" Margin="0,0,3,0" ToolTip="Ветер">
-                                        <TextBlock x:Name="WxWind" Foreground="White" FontSize="11" TextAlignment="Center" TextWrapping="Wrap"/>
+                                    <Border Background="#29FFFFFF" CornerRadius="12" Padding="6,6" Margin="0,0,3,0">
+                                        <StackPanel>
+                                            <TextBlock x:Name="WxWindCaption" Text="ВЕТЕР" Foreground="#B3FFFFFF" FontSize="9" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="WxWind" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
                                     </Border>
-                                    <Border Background="#33FFFFFF" CornerRadius="10" Padding="4,6" Margin="3,0" ToolTip="Влажность">
-                                        <TextBlock x:Name="WxHum" Foreground="White" FontSize="11" TextAlignment="Center"/>
+                                    <Border Background="#29FFFFFF" CornerRadius="12" Padding="6,6" Margin="3,0">
+                                        <StackPanel>
+                                            <TextBlock Text="ВЛАЖН." Foreground="#B3FFFFFF" FontSize="9" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="WxHum" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
                                     </Border>
-                                    <Border Background="#33FFFFFF" CornerRadius="10" Padding="4,6" Margin="3,0,0,0" ToolTip="Осадки сейчас">
-                                        <TextBlock x:Name="WxPrecip" Foreground="White" FontSize="11" TextAlignment="Center"/>
+                                    <Border Background="#29FFFFFF" CornerRadius="12" Padding="6,6" Margin="3,0,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="ОСАДКИ" Foreground="#B3FFFFFF" FontSize="9" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="WxPrecip" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
                                     </Border>
                                 </UniformGrid>
                                 <TextBlock x:Name="WxSun" Grid.Row="6" Foreground="#D9FFFFFF" FontSize="11" Margin="0,8,0,0"/>
@@ -928,10 +1015,10 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Border Background="{StaticResource Surface}" CornerRadius="24" Padding="6,10">
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="6,10">
                                 <UniformGrid x:Name="HourPanel" Columns="8"/>
                             </Border>
-                            <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="24" Padding="14,10" Margin="0,8,0,0">
+                            <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,10" Margin="0,8,0,0">
                                 <Grid>
                                     <StackPanel x:Name="DayPanel" VerticalAlignment="Top"/>
                                     <TextBlock Text="Данные Open-Meteo" Foreground="#59FFFFFF" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
@@ -944,51 +1031,59 @@
                     <Grid x:Name="ControlView" Margin="14,4,14,14" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="76"/>
+                            <RowDefinition Height="74"/>
                         </Grid.RowDefinitions>
-                        <UniformGrid Columns="4">
+                        <UniformGrid Columns="2" Rows="2">
                             <Button Style="{StaticResource ControlTile}" Tag="wifi" Click="Tile_Click">
                                 <Grid>
-                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                    <Border x:Name="WifiIcon" Width="38" Height="38" CornerRadius="19" HorizontalAlignment="Left" Background="{StaticResource Surface2}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border x:Name="WifiIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
                                         <TextBlock Style="{StaticResource Glyph}" Text="&#xE701;" HorizontalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Grid.Row="2" Text="Wi-Fi" FontSize="13" FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="WifiState" Grid.Row="3" Foreground="{StaticResource SubBrush}" FontSize="11"/>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Wi-Fi" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="WifiState" Foreground="{StaticResource SubBrush}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
                                 </Grid>
                             </Button>
                             <Button Style="{StaticResource ControlTile}" Tag="bluetooth" Click="Tile_Click">
                                 <Grid>
-                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                    <Border x:Name="BluetoothIcon" Width="38" Height="38" CornerRadius="19" HorizontalAlignment="Left" Background="{StaticResource Surface2}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border x:Name="BluetoothIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
                                         <TextBlock Style="{StaticResource Glyph}" Text="&#xE702;" HorizontalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Grid.Row="2" Text="Bluetooth" FontSize="13" FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="BluetoothState" Grid.Row="3" Foreground="{StaticResource SubBrush}" FontSize="11"/>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Bluetooth" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="BluetoothState" Foreground="{StaticResource SubBrush}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
                                 </Grid>
                             </Button>
                             <Button Style="{StaticResource ControlTile}" Tag="theme" Click="Tile_Click">
                                 <Grid>
-                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                    <Border x:Name="ThemeIcon" Width="38" Height="38" CornerRadius="19" HorizontalAlignment="Left" Background="{StaticResource Surface2}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border x:Name="ThemeIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
                                         <TextBlock Text="◐" FontFamily="Segoe UI Symbol" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Grid.Row="2" Text="Тёмная тема" FontSize="13" FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="ThemeState" Grid.Row="3" Foreground="{StaticResource SubBrush}" FontSize="11"/>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Тёмная тема" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="ThemeState" Foreground="{StaticResource SubBrush}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
                                 </Grid>
                             </Button>
                             <Button Style="{StaticResource ControlTile}" Tag="vpn" Click="Tile_Click">
                                 <Grid>
-                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                    <Border x:Name="VpnIcon" Width="38" Height="38" CornerRadius="19" HorizontalAlignment="Left" Background="{StaticResource Surface2}">
-                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE72E;" HorizontalAlignment="Center"/>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border x:Name="VpnIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
+                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE705;" HorizontalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Grid.Row="2" Text="VPN" FontSize="13" FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="VpnState" Grid.Row="3" Foreground="{StaticResource SubBrush}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="VPN" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="VpnState" Foreground="{StaticResource SubBrush}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
                                 </Grid>
                             </Button>
                         </UniformGrid>
-                        <UniformGrid Grid.Row="1" Columns="4">
+                        <UniformGrid Grid.Row="1" Columns="4" Margin="0,4,0,0">
                             <Button Style="{StaticResource Tile}" Tag="lock" Click="Power_Click">
                                 <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE72E;" HorizontalAlignment="Center"/><TextBlock Text="Блокировка" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
                             </Button>
@@ -1012,14 +1107,39 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <TextBox x:Name="SearchBox" Style="{StaticResource InputBox}" Tag="Программы, файлы, вопрос к ИИ" TextChanged="SearchBox_TextChanged" PreviewKeyDown="SearchBox_PreviewKeyDown"/>
-                        <ListBox x:Name="SearchList" Grid.Row="1" Style="{StaticResource PlainList}" Margin="0,8,0,0" ItemTemplate="{StaticResource SearchRowTemplate}"/>
+                        <ListBox x:Name="SearchList" Grid.Row="1" Style="{StaticResource CardList}" Margin="0,10,0,0" ItemTemplate="{StaticResource SearchRowTemplate}"/>
+                        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasItems, ElementName=SearchList}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Style="{StaticResource EmptyGlyph}" Text="&#xE721;"/>
+                            <TextBlock Text="Программы, файлы из индекса Windows, вопрос к ИИ или поиск в браузере" Foreground="{StaticResource SubBrush}" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="300"/>
+                        </StackPanel>
                         <TextBlock Grid.Row="2" Text="↑↓ — выбор · Enter — открыть · Esc — закрыть" Foreground="{StaticResource SubBrush}" FontSize="11" Margin="2,8,0,0"/>
                     </Grid>
 
                     <!-- SETTINGS -->
                     <ScrollViewer x:Name="SettingsView" Margin="14,4,14,14" Visibility="Collapsed" VerticalScrollBarVisibility="Hidden" Focusable="False">
                         <StackPanel Margin="0,0,6,0">
-                            <Border Background="{StaticResource Surface}" CornerRadius="20" Padding="14,12" Margin="0,0,0,8">
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,12" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="РЕЖИМ" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button x:Name="ModeStandardButton" Style="{StaticResource PresetBtn}" Content="Стандартный" Tag="standard" Click="Mode_Click"/>
+                                        <Button x:Name="ModeMinimalButton" Style="{StaticResource PresetBtn}" Content="Минималистичный" Tag="minimal" Click="Mode_Click"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Минималистичный: маленький кружок, при наведении открывается остров." Foreground="{StaticResource SubBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,12" Margin="0,0,0,8">
                                 <StackPanel>
                                     <TextBlock Text="ПОГОДА" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                     <Grid Margin="0,0,0,6">
@@ -1049,7 +1169,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border Background="{StaticResource Surface}" CornerRadius="20" Padding="14,12" Margin="0,0,0,8">
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,12" Margin="0,0,0,8">
                                 <StackPanel>
                                     <TextBlock Text="ПОИСК И ИИ" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                     <Grid Margin="0,0,0,6">
@@ -1071,7 +1191,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border Background="{StaticResource Surface}" CornerRadius="20" Padding="14,12" Margin="0,0,0,8">
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,12" Margin="0,0,0,8">
                                 <StackPanel>
                                     <TextBlock Text="ОФОРМЛЕНИЕ" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                     <TextBlock Text="Акцентный цвет" Foreground="{StaticResource TextBrush}" FontSize="12" Margin="0,0,0,8"/>
@@ -1079,7 +1199,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border Background="{StaticResource Surface}" CornerRadius="20" Padding="14,12" Margin="0,0,0,8">
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,12" Margin="0,0,0,8">
                                 <StackPanel>
                                     <TextBlock Text="СИСТЕМА" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                     <TextBlock x:Name="SetPort" Foreground="{StaticResource SubBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>

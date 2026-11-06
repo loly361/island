@@ -50,11 +50,13 @@ public partial class IslandWindow : Window
 
     private const double CollapsedW = 190, CollapsedH = 34;
     private const double ExpandedW = 600;
+    private const double PillClipOverhang = 40;
+    private const double MinimalSize = 18, MinimalTop = 6;
     private const double AlertW = 390, AlertH = 62;
     private const int HotkeyId = 0x1510;
     private static readonly TimeSpan TypingGrace = TimeSpan.FromSeconds(12);
     private const int IxHome = 0, IxClip = 1, IxInbox = 2, IxNotes = 3, IxWeather = 4, IxControl = 5, IxSearch = 6, IxSettings = 7;
-    private static readonly double[] TabHeights = { 345, 375, 375, 395, 395, 330, 395, 395 };
+    private static readonly double[] TabHeights = { 345, 375, 375, 395, 395, 275, 395, 395 };
 
     private readonly Settings _settings;
     private readonly ClipboardHistory _clips;
@@ -81,7 +83,8 @@ public partial class IslandWindow : Window
     private int _winX, _winY, _winW;
     private IntPtr _hwnd, _lastExternal;
     private HwndSource? _source;
-    private DateTime? _hoverSince, _leaveSince;
+    private DateTime? _hoverSince;
+    private bool _hoveredSinceExpand;
     private DateTime _alertUntil = DateTime.MinValue;
     private DateTime _suppressUntil = DateTime.MinValue;
     private DateTime _lastKeyUtc = DateTime.MinValue;
@@ -90,6 +93,12 @@ public partial class IslandWindow : Window
 
     /// <summary>The collapsed pill grows to fit the timer ring and the album cover when they are shown.</summary>
     private double CollapsedNow => CollapsedW + (_timerChipShown ? 80 : 0) + (_coverShown ? 26 : 0);
+
+    private bool Minimal => string.Equals(_settings.Mode, Settings.ModeMinimal, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Size, corner radius and top offset of the resting shape: the full pill, or a small circle in minimal mode.</summary>
+    private (double W, double H, double Radius, double Top) CollapsedShape() =>
+        Minimal ? (MinimalSize, MinimalSize, MinimalSize / 2, MinimalTop) : (CollapsedNow, CollapsedH, 18, 0);
     private Note? _currentNote;
     private CancellationTokenSource? _searchCts;
     private string _hotkeyLabel = "Alt+Space";
@@ -109,6 +118,7 @@ public partial class IslandWindow : Window
         TimeText.Text = DateTime.Now.ToString("HH:mm");
         OnMediaChanged(new MediaSnapshot());
         RenderVolume();
+        if (Minimal) ShowMinimalShape();
 
         _media.Changed += OnMediaChanged;
         _hoverTimer.Tick += OnHoverTick;
@@ -230,28 +240,36 @@ public partial class IslandWindow : Window
     {
         var prev = _state;
         _state = next;
-        _leaveSince = null;
+        if (prev != State.Expanded) _hoveredSinceExpand = false;
         _hoverSince = null;
 
         switch (next)
         {
             case State.Collapsed:
-                AnimateTo(CollapsedNow, CollapsedH, 18);
+            {
+                var shape = CollapsedShape();
+                var delay = prev == State.Expanded ? 140 : 40;
+                AnimateTo(shape.W, shape.H, shape.Radius, top: shape.Top);
                 Fade(AlertView, false);
                 Fade(ExpandedView, false);
-                Fade(CollapsedView, true, prev == State.Expanded ? 140 : 40);
+                Fade(CollapsedView, !Minimal, delay);
+                Fade(MinimalDot, Minimal, delay);
                 break;
+            }
             case State.Alert:
                 AnimateTo(AlertW, AlertH, 30, spring: true);
                 Fade(CollapsedView, false);
+                Fade(MinimalDot, false);
                 Fade(ExpandedView, false);
                 Fade(AlertView, true, 90);
                 break;
             case State.Expanded:
+                ExpandedView.Height = TabHeights[_tab];
                 AnimateTo(ExpandedW, TabHeights[_tab], 34, spring: true);
                 Fade(CollapsedView, false);
+                Fade(MinimalDot, false);
                 Fade(AlertView, false);
-                Fade(ExpandedView, true, 90);
+                Fade(ExpandedView, true, 40);
                 if (prev != State.Expanded) PopExpanded();
                 break;
         }
@@ -261,31 +279,65 @@ public partial class IslandWindow : Window
 
     private void RefreshCollapsedSize()
     {
-        if (_state == State.Collapsed && Math.Abs(_curW - CollapsedNow) > 0.5) AnimateTo(CollapsedNow, CollapsedH, 18);
+        if (_state != State.Collapsed) return;
+        var shape = CollapsedShape();
+        if (Math.Abs(_curW - shape.W) > 0.5) AnimateTo(shape.W, shape.H, shape.Radius, top: shape.Top);
+    }
+
+    /// <summary>Re-applies the display mode after a settings change; an open panel switches once it closes.</summary>
+    private void ApplyMode()
+    {
+        if (_state == State.Collapsed) SetState(State.Collapsed);
+    }
+
+    /// <summary>Starts in the circle directly, so the window does not animate down from the standard pill.</summary>
+    private void ShowMinimalShape()
+    {
+        var shape = CollapsedShape();
+        _curW = shape.W;
+        _curH = shape.Top + shape.H;
+        PillClip.Rect = ClipRect(shape.W, shape.H, shape.Top);
+        PillClip.RadiusX = PillClip.RadiusY = shape.Radius;
+        CollapsedView.Visibility = Visibility.Collapsed;
+        CollapsedView.Opacity = 0;
+        MinimalDot.Visibility = Visibility.Visible;
+        MinimalDot.Opacity = 1;
+    }
+
+    /// <summary>
+    /// A shape hanging from the top edge starts above the window, so its rounded top corners are never visible and only
+    /// the bottom corners show; a floating circle (top &gt; 0) keeps all four.
+    /// </summary>
+    private static Rect ClipRect(double w, double h, double top)
+    {
+        var overhang = top > 0 ? 0 : PillClipOverhang;
+        return new Rect((ExpandedW - w) / 2, top - overhang, w, h + overhang);
     }
 
     /// <summary>Resizes the pill; a spring adds a small overshoot like iOS, a plain ease settles without one.</summary>
-    private void AnimateTo(double w, double h, double radius, bool spring = false)
+    private void AnimateTo(double w, double h, double radius, bool spring = false, double top = 0)
     {
         _curW = w;
-        _curH = h;
-        var duration = TimeSpan.FromMilliseconds(spring ? 440 : 260);
+        _curH = top + h;
+        // Opening decelerates smoothly with no overshoot: a bouncing clip edge reads as a stutter.
+        var duration = TimeSpan.FromMilliseconds(spring ? 460 : 260);
         IEasingFunction ease = spring
-            ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.4 }
+            ? new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 6 }
             : new CubicEase { EasingMode = EasingMode.EaseOut };
-        Pill.BeginAnimation(WidthProperty, new DoubleAnimation(w, duration) { EasingFunction = ease });
-        Pill.BeginAnimation(HeightProperty, new DoubleAnimation(h, duration) { EasingFunction = ease });
-        Pill.CornerRadius = new CornerRadius(0, 0, radius, radius);
+
+        var target = ClipRect(w, h, top);
+        PillClip.BeginAnimation(RectangleGeometry.RectProperty, new RectAnimation(target, duration) { EasingFunction = ease });
+        PillClip.BeginAnimation(RectangleGeometry.RadiusXProperty, new DoubleAnimation(radius, duration) { EasingFunction = ease });
+        PillClip.BeginAnimation(RectangleGeometry.RadiusYProperty, new DoubleAnimation(radius, duration) { EasingFunction = ease });
     }
 
     private void PopExpanded()
     {
-        var ease = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 };
+        var ease = new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 6 };
         foreach (var property in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
         {
-            ExpandedScale.BeginAnimation(property, new DoubleAnimation(0.93, 1, TimeSpan.FromMilliseconds(420))
+            ExpandedScale.BeginAnimation(property, new DoubleAnimation(0.96, 1, TimeSpan.FromMilliseconds(460))
             {
-                BeginTime = TimeSpan.FromMilliseconds(40),
                 EasingFunction = ease,
             });
         }
@@ -414,9 +466,12 @@ public partial class IslandWindow : Window
         var left = _winX + (_winW - widthPx) / 2;
         var right = left + widthPx;
         var bottom = _winY + _curH * _scale;
-        var inside = p.X >= left - 6 && p.X <= right + 6 && p.Y >= _winY - 2 && p.Y <= bottom + 8;
+        // The small circle is hard to hit, so its hover area is padded more generously than the pill's.
+        var circle = Minimal && _state == State.Collapsed;
+        var pad = circle ? 14 : 6;
+        var inside = p.X >= left - pad && p.X <= right + pad && p.Y >= _winY - 2 && p.Y <= bottom + 8;
         var centerX = _winX + _winW / 2.0;
-        var trigger = p.Y <= _winY + 1 && Math.Abs(p.X - centerX) <= (CollapsedNow / 2 + 30) * _scale;
+        var trigger = p.Y <= _winY + 1 && Math.Abs(p.X - centerX) <= ((circle ? MinimalSize : CollapsedNow) / 2 + 30) * _scale;
 
         if (_state != State.Expanded)
         {
@@ -434,22 +489,21 @@ public partial class IslandWindow : Window
             return;
         }
 
-        if (inside || KeepOpen())
+        if (inside)
         {
-            _leaveSince = null;
+            _hoveredSinceExpand = true;
+            return;
         }
-        else
-        {
-            _leaveSince ??= now;
-            if (now - _leaveSince > TimeSpan.FromMilliseconds(450)) Collapse();
-        }
+
+        // Leaving with the cursor closes the panel on the next tick; typing only holds it open when it was opened from the keyboard.
+        if (!KeepOpen()) Collapse();
     }
 
     private bool KeepOpen() =>
         _pinned
         || _overlayOpen
         || Mouse.LeftButton == MouseButtonState.Pressed
-        || (IsActive && Keyboard.FocusedElement is TextBoxBase && DateTime.UtcNow - _lastKeyUtc < TypingGrace);
+        || (!_hoveredSinceExpand && IsActive && Keyboard.FocusedElement is TextBoxBase && DateTime.UtcNow - _lastKeyUtc < TypingGrace);
 
     private void TrackForeground()
     {
@@ -496,6 +550,8 @@ public partial class IslandWindow : Window
 
         var visible = _state == State.Expanded;
         MoveTabIndicator(tab, visible && previous != tab);
+        // Laid out once per tab switch, not per animation frame.
+        ExpandedView.Height = TabHeights[tab];
         if (visible)
         {
             AnimateTo(ExpandedW, TabHeights[tab], 34, spring: true);
@@ -936,6 +992,7 @@ public partial class IslandWindow : Window
         NotesEmpty.Visibility = has ? Visibility.Collapsed : Visibility.Visible;
         if (!has) _currentNote = null;
         else if (NotesList.SelectedItem is NoteRow selected && selected.Note != _currentNote) LoadNote(selected.Note);
+        UpdateNotePlaceholder();
     }
 
     private void LoadNote(Note note)
@@ -987,9 +1044,22 @@ public partial class IslandWindow : Window
 
     private void NoteEditor_TextChanged(object sender, TextChangedEventArgs e)
     {
+        UpdateNotePlaceholder();
         if (_loadingNote || _currentNote is null) return;
         _noteTimer.Stop();
         _noteTimer.Start();
+    }
+
+    /// <summary>Shows «Начните писать…» while the open note is a single empty paragraph; a list or any text hides it.</summary>
+    private void UpdateNotePlaceholder()
+    {
+        // TextChanged can fire while InitializeComponent is still building the window.
+        if (NotePlaceholder is null) return;
+        var blocks = NoteEditor.Document.Blocks;
+        var empty = blocks.Count == 0
+            || blocks.Count == 1 && blocks.FirstBlock is Paragraph p
+                && new TextRange(p.ContentStart, p.ContentEnd).Text.Length == 0;
+        NotePlaceholder.Visibility = empty && _currentNote is not null ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void FlushNote()

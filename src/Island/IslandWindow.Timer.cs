@@ -219,7 +219,7 @@ public partial class IslandWindow
 
         SystemSounds.Exclamation.Play();
         var last = due[^1];
-        ShowAlert("Напоминание", due.Count == 1 ? last.Text : $"{last.Text} и ещё {due.Count - 1}", 12000, "", null, (Brush)FindResource("TimerBrush"));
+        ShowAlert("Напоминание", due.Count == 1 ? last.Text : $"{last.Text} и ещё {due.Count - 1}", 12000, "", null, (Brush)FindResource("TimerBrush"));
         if (_state == State.Expanded && _tab == IxNotes) RenderReminders();
     }
 }

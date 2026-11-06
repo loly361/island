@@ -50,7 +50,9 @@ public partial class IslandWindow
         WxFeels.Text = today is null
             ? $"Ощущается как {f.FeelsC}°"
             : $"Ощущается как {f.FeelsC}° · {today.MinC}°…{today.MaxC}°";
-        WxWind.Text = $"{f.WindMs:0.#} м/с {f.WindDir}";
+        WxWind.Text = $"{f.WindMs:0.#} м/с";
+        // The tile is too narrow for the direction next to the caption, so it lives in the tooltip.
+        WxWindCaption.ToolTip = string.IsNullOrEmpty(f.WindDir) ? null : $"Направление: {f.WindDir}";
         WxHum.Text = $"{f.Humidity}%";
         WxPrecip.Text = $"{f.PrecipMm:0.#} мм";
         WxSun.Text = $"Восход {f.Sunrise:HH:mm} · закат {f.Sunset:HH:mm}";
