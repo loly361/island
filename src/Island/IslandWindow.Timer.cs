@@ -57,7 +57,7 @@ public partial class IslandWindow
     {
         SystemSounds.Asterisk.Play();
         var minutes = (int)Math.Round(_timer.Total.TotalMinutes);
-        ShowAlert("Таймер завершён", $"{minutes} мин прошло", 10000, "\uE823", null, (Brush)FindResource("TimerBrush"));
+        ShowAlert(Loc.T("Таймер завершён"), Loc.F("{0} мин прошло", minutes), 10000, "\uE823", null, (Brush)FindResource("TimerBrush"));
         if (_tab == IxNotes) RenderTimer();
     }
 
@@ -87,8 +87,8 @@ public partial class IslandWindow
         TimerText.Text = ClockText(_timer.Remaining);
         DrawRing(_timer.Fraction);
         TimerStartGlyph.Text = _timer.Running ? "" : "";
-        TimerStartLabel.Text = _timer.Running ? "Пауза" : _timer.Paused ? "Продолжить" : "Старт";
-        TimerSecondaryLabel.Text = _timer.Running || _timer.Paused ? "Сбросить" : "Своё время";
+        TimerStartLabel.Text = Loc.T(_timer.Running ? "Пауза" : _timer.Paused ? "Продолжить" : "Старт");
+        TimerSecondaryLabel.Text = Loc.T(_timer.Running || _timer.Paused ? "Сбросить" : "Своё время");
         UpdateTimerChip();
     }
 
@@ -194,7 +194,7 @@ public partial class IslandWindow
         var parsed = ReminderParser.Parse(ReminderBox.Text, DateTime.Now);
         if (parsed is null)
         {
-            ReminderHint.Text = "Не удалось понять, когда напомнить. Например: «завтра в 9», «через 20 минут», «каждый день в 23:00».";
+            ReminderHint.Text = Loc.T("Не удалось понять, когда напомнить. Например: «завтра в 9», «через 20 минут», «каждый день в 23:00».");
             ReminderHint.Visibility = Visibility.Visible;
             return;
         }
@@ -219,7 +219,7 @@ public partial class IslandWindow
 
         SystemSounds.Exclamation.Play();
         var last = due[^1];
-        ShowAlert("Напоминание", due.Count == 1 ? last.Text : $"{last.Text} и ещё {due.Count - 1}", 12000, "", null, (Brush)FindResource("TimerBrush"));
+        ShowAlert(Loc.T("Напоминание"), due.Count == 1 ? last.Text : Loc.F("{0} и ещё {1}", last.Text, due.Count - 1), 12000, "", null, (Brush)FindResource("TimerBrush"));
         if (_state == State.Expanded && _tab == IxNotes) RenderReminders();
     }
 }

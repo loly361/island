@@ -40,6 +40,8 @@ public partial class App : Application
         };
 
         var settings = JsonStore.Load(AppPaths.File("settings.json"), () => new Settings());
+        // The language is fixed for the whole session; switching it in settings applies after a restart.
+        Loc.Language = settings.Language;
         if (settings.NotifyToken.Length == 0)
         {
             settings.NotifyToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
@@ -60,27 +62,27 @@ public partial class App : Application
     private void BuildTray(Settings settings)
     {
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Открыть", null, (_, _) => _window?.OpenHome());
-        menu.Items.Add("Поиск", null, (_, _) => _window?.OpenSearch());
+        menu.Items.Add(Loc.T("Открыть"), null, (_, _) => _window?.OpenHome());
+        menu.Items.Add(Loc.T("Поиск"), null, (_, _) => _window?.OpenSearch());
 
-        var autostart = new Forms.ToolStripMenuItem("Запускать вместе с Windows") { Checked = Autostart.IsEnabled(), CheckOnClick = true };
+        var autostart = new Forms.ToolStripMenuItem(Loc.T("Запускать вместе с Windows")) { Checked = Autostart.IsEnabled(), CheckOnClick = true };
         autostart.CheckedChanged += (_, _) => Autostart.Set(autostart.Checked);
         menu.Items.Add(autostart);
 
-        var inbox = new Forms.ToolStripMenuItem("Показывать уведомления Windows") { Checked = settings.NotificationsEnabled, CheckOnClick = true };
+        var inbox = new Forms.ToolStripMenuItem(Loc.T("Показывать уведомления Windows")) { Checked = settings.NotificationsEnabled, CheckOnClick = true };
         inbox.CheckedChanged += async (_, _) =>
         {
             if (_window is not null) await _window.SetInboxEnabledAsync(inbox.Checked);
         };
         menu.Items.Add(inbox);
 
-        menu.Items.Add("Папка с данными", null, (_, _) =>
+        menu.Items.Add(Loc.T("Папка с данными"), null, (_, _) =>
         {
             Directory.CreateDirectory(AppPaths.DataDir);
             SystemUtil.Launch(AppPaths.DataDir);
         });
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Выход", null, (_, _) => Quit());
+        menu.Items.Add(Loc.T("Выход"), null, (_, _) => Quit());
 
         _tray = new Forms.NotifyIcon
         {

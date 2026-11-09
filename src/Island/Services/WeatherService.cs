@@ -47,7 +47,7 @@ public static class WeatherCodes
         >= 95 => WxKind.Thunder,
         _ => WxKind.Cloudy,
     };
-    public static string Describe(int code) => code switch
+    public static string Describe(int code) => Loc.T(code switch
     {
         0 => "Ясно",
         1 => "Преимущественно ясно",
@@ -62,7 +62,7 @@ public static class WeatherCodes
         85 or 86 => "Снегопад",
         >= 95 => "Гроза",
         _ => "—",
-    };
+    });
 
     private static readonly string[] Compass = { "С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ" };
 
@@ -70,7 +70,7 @@ public static class WeatherCodes
     public static string WindDirection(double degrees)
     {
         var normalized = ((degrees % 360) + 360) % 360;
-        return Compass[(int)Math.Round(normalized / 45.0) % 8];
+        return Loc.T(Compass[(int)Math.Round(normalized / 45.0) % 8]);
     }
 }
 

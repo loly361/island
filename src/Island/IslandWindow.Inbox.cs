@@ -74,12 +74,12 @@ public partial class IslandWindow
         InboxList.ItemsSource = rows;
         InboxEmpty.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         InboxEmpty.Text = !_settings.NotificationsEnabled
-            ? "Показ уведомлений Windows выключен. Включить его можно в меню значка в трее."
+            ? Loc.T("Показ уведомлений Windows выключен. Включить его можно в меню значка в трее.")
             : !_inbox.Available
                 ? (Environment.ProcessPath?.Length > 200
-                    ? "Windows не даёт доступ к уведомлениям, когда программа лежит в папке с очень длинным путём. Перенесите её, например, в Загрузки."
-                    : $"Нет доступа к уведомлениям Windows. Разрешите его в Параметры → Конфиденциальность и защита → Уведомления.\n({_inbox.Diagnostics})")
-                : "Новых уведомлений нет";
+                    ? Loc.T("Windows не даёт доступ к уведомлениям, когда программа лежит в папке с очень длинным путём. Перенесите её, например, в Загрузки.")
+                    : Loc.T("Нет доступа к уведомлениям Windows. Разрешите его в Параметры → Конфиденциальность и защита → Уведомления.") + $"\n({_inbox.Diagnostics})")
+                : Loc.T("Новых уведомлений нет");
     }
 
     private void InboxClear_Click(object sender, RoutedEventArgs e)

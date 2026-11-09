@@ -23,18 +23,18 @@ public partial class IslandWindow
 
     private void RenderControl()
     {
-        SetTile(WifiIcon, WifiState, _control.WifiOn, "Включён", "Выключен");
-        SetTile(BluetoothIcon, BluetoothState, _control.BluetoothOn, "Включён", "Выключен");
-        SetTile(ThemeIcon, ThemeState, ControlService.IsDarkTheme(), "Включена", "Выключена");
-        SetTile(VpnIcon, VpnState, _control.VpnName is null ? null : _control.VpnConnected, "Подключён", "Выключен", "Не настроен");
+        SetTile(WifiIcon, WifiState, _control.WifiOn, Loc.T("Включён"), Loc.T("Выключен"));
+        SetTile(BluetoothIcon, BluetoothState, _control.BluetoothOn, Loc.T("Включён"), Loc.T("Выключен"));
+        SetTile(ThemeIcon, ThemeState, ControlService.IsDarkTheme(), Loc.T("Включена"), Loc.T("Выключена"));
+        SetTile(VpnIcon, VpnState, _control.VpnName is null ? null : _control.VpnConnected, Loc.T("Подключён"), Loc.T("Выключен"), Loc.T("Не настроен"));
     }
 
-    private void SetTile(Border icon, TextBlock state, bool? on, string onText, string offText, string unavailable = "Недоступно")
+    private void SetTile(Border icon, TextBlock state, bool? on, string onText, string offText, string? unavailable = null)
     {
         if (on is null)
         {
             icon.Background = (Brush)FindResource("Surface2");
-            state.Text = unavailable;
+            state.Text = unavailable ?? Loc.T("Недоступно");
             return;
         }
 
@@ -105,7 +105,7 @@ public partial class IslandWindow
         Disarm();
         _armed = tag;
         var label = tag == "restart" ? RestartLabel : ShutdownLabel;
-        label.Text = "Точно?";
+        label.Text = Loc.T("Точно?");
         label.Foreground = (Brush)FindResource("AccentBrush");
         _disarmTimer.Tick -= OnDisarm;
         _disarmTimer.Tick += OnDisarm;
@@ -118,8 +118,8 @@ public partial class IslandWindow
     {
         _disarmTimer.Stop();
         _armed = null;
-        RestartLabel.Text = "Перезагрузка";
-        ShutdownLabel.Text = "Выключение";
+        RestartLabel.Text = Loc.T("Перезагрузка");
+        ShutdownLabel.Text = Loc.T("Выключение");
         RestartLabel.ClearValue(TextBlock.ForegroundProperty);
         ShutdownLabel.ClearValue(TextBlock.ForegroundProperty);
     }

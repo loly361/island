@@ -66,6 +66,7 @@ public partial class IslandWindow
         _settings.CopyFrom(fresh);
         _ = RefreshAccentAsync(animate: true);
         RenderModeButtons();
+        RenderLanguageButtons();
         ApplyMode();
     }
 
@@ -76,10 +77,28 @@ public partial class IslandWindow
         SetLongitude.Text = _settings.Longitude?.ToString(CultureInfo.InvariantCulture) ?? "";
         SetSearch.Text = _settings.SearchUrl;
         SetAsk.Text = _settings.AskUrl;
-        SetPort.Text = $"Порт уведомлений {_settings.NotifyPort} нужен для хука Claude Code. Меняется в settings.json, после этого нужен перезапуск.";
+        SetPort.Text = Loc.F("Порт уведомлений {0} нужен для хука Claude Code. Меняется в settings.json, после этого нужен перезапуск.", _settings.NotifyPort);
         SetHint.Visibility = Visibility.Collapsed;
         BuildAccentSwatches();
         RenderModeButtons();
+        RenderLanguageButtons();
+    }
+
+    /// <summary>Highlights the saved language; the running window keeps the language it started with until a restart.</summary>
+    private void RenderLanguageButtons()
+    {
+        var french = Loc.Normalize(_settings.Language) == Loc.French;
+        StyleModeButton(LanguageRuButton, !french);
+        StyleModeButton(LanguageFrButton, french);
+    }
+
+    private void Language_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string language }) return;
+
+        _settings.Language = Loc.Normalize(language);
+        JsonStore.Save(AppPaths.File("settings.json"), _settings);
+        RenderLanguageButtons();
     }
 
     private void RenderModeButtons()
@@ -123,7 +142,7 @@ public partial class IslandWindow
             var swatch = new Button
             {
                 Style = (Style)FindResource("SwatchBtn"),
-                ToolTip = name,
+                ToolTip = Loc.T(name),
                 Tag = hex,
                 Background = hex is null ? WallpaperSwatch : new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)),
                 BorderThickness = new Thickness(selected ? 2 : 0),
@@ -182,8 +201,8 @@ public partial class IslandWindow
         {
             RenderSettings();
             SetHint.Text = box == SetSearch || box == SetAsk
-                ? "Ссылка должна начинаться с http или https и содержать {0} там, где вставляется запрос."
-                : "Координата — число: широта от −90 до 90, долгота от −180 до 180.";
+                ? Loc.T("Ссылка должна начинаться с http или https и содержать {0} там, где вставляется запрос.")
+                : Loc.T("Координата — число: широта от −90 до 90, долгота от −180 до 180.");
             SetHint.Visibility = Visibility.Visible;
             return;
         }

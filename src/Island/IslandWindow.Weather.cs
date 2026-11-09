@@ -34,34 +34,34 @@ public partial class IslandWindow
 
         if (_forecast is not { } f)
         {
-            WxCity.Text = "Погода";
-            WxDesc.Text = "Нет данных";
-            WxFeels.Text = "Проверьте подключение к интернету и нажмите обновить.";
+            WxCity.Text = Loc.T("Погода");
+            WxDesc.Text = Loc.T("Нет данных");
+            WxFeels.Text = Loc.T("Проверьте подключение к интернету и нажмите обновить.");
             return;
         }
 
         WxCard.Background = CardGradient(f.Kind, f.IsDay);
-        WxCity.Text = f.City ?? "Погода";
+        WxCity.Text = f.City ?? Loc.T("Погода");
         WxIcon.Content = WeatherIcons.Create(f.Kind, 40);
         WxTemp.Text = $"{f.TempC}°";
         WxDesc.Text = f.Description;
 
         var today = f.Days.FirstOrDefault(d => d.Date.Date == DateTime.Now.Date) ?? f.Days.FirstOrDefault();
         WxFeels.Text = today is null
-            ? $"Ощущается как {f.FeelsC}°"
-            : $"Ощущается как {f.FeelsC}° · {today.MinC}°…{today.MaxC}°";
-        WxWind.Text = $"{f.WindMs:0.#} м/с";
+            ? Loc.F("Ощущается как {0}°", f.FeelsC)
+            : Loc.F("Ощущается как {0}° · {1}°…{2}°", f.FeelsC, today.MinC, today.MaxC);
+        WxWind.Text = Loc.F("{0:0.#} м/с", f.WindMs);
         // The tile is too narrow for the direction next to the caption, so it lives in the tooltip.
-        WxWindCaption.ToolTip = string.IsNullOrEmpty(f.WindDir) ? null : $"Направление: {f.WindDir}";
+        WxWindCaption.ToolTip = string.IsNullOrEmpty(f.WindDir) ? null : Loc.F("Направление: {0}", f.WindDir);
         WxHum.Text = $"{f.Humidity}%";
-        WxPrecip.Text = $"{f.PrecipMm:0.#} мм";
-        WxSun.Text = $"Восход {f.Sunrise:HH:mm} · закат {f.Sunset:HH:mm}";
+        WxPrecip.Text = Loc.F("{0:0.#} мм", f.PrecipMm);
+        WxSun.Text = Loc.F("Восход {0:HH:mm} · закат {1:HH:mm}", f.Sunrise, f.Sunset);
 
         for (var i = 0; i < f.Hours.Count; i++)
         {
             var h = f.Hours[i];
             var column = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
-            column.Children.Add(Text(i == 0 ? "Сейчас" : $"{h.Time.Hour}:00", 10, "SubBrush", center: true));
+            column.Children.Add(Text(i == 0 ? Loc.T("Сейчас") : $"{h.Time.Hour}:00", 10, "SubBrush", center: true));
             var hourIcon = WeatherIcons.Create(i == 0 ? f.Kind : h.Kind, 20);
             hourIcon.Margin = new Thickness(0, 5, 0, 5);
             hourIcon.HorizontalAlignment = HorizontalAlignment.Center;
@@ -92,7 +92,7 @@ public partial class IslandWindow
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(54) });
 
         var isToday = d.Date.Date == DateTime.Now.Date;
-        Place(row, Text(isToday ? "Сегодня" : DayShort[(int)d.Date.DayOfWeek], 12, "TextBrush", semibold: true), 0);
+        Place(row, Text(Loc.T(isToday ? "Сегодня" : DayShort[(int)d.Date.DayOfWeek]), 12, "TextBrush", semibold: true), 0);
         var dayIcon = WeatherIcons.Create(d.Kind, 18);
         dayIcon.HorizontalAlignment = HorizontalAlignment.Left;
         dayIcon.VerticalAlignment = VerticalAlignment.Center;
@@ -120,7 +120,7 @@ public partial class IslandWindow
         {
             Place(row, new TextBlock
             {
-                Text = $"{d.PrecipMm:0.#} мм",
+                Text = Loc.F("{0:0.#} мм", d.PrecipMm),
                 FontSize = 10,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x79, 0xB8, 0xFF)),
                 VerticalAlignment = VerticalAlignment.Center,

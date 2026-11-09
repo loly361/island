@@ -161,11 +161,11 @@ public static class TimeLabels
     {
         var d = now - at;
         if (d < TimeSpan.Zero) d = TimeSpan.Zero;
-        if (d.TotalSeconds < 45) return "сейчас";
-        if (d.TotalMinutes < 60) return $"{(int)Math.Max(1, d.TotalMinutes)} мин";
-        if (d.TotalHours < 24) return $"{(int)d.TotalHours} ч";
-        if (d.TotalDays < 2) return "вчера";
-        return $"{(int)d.TotalDays} дн";
+        if (d.TotalSeconds < 45) return Loc.T("сейчас");
+        if (d.TotalMinutes < 60) return Loc.F("{0} мин", (int)Math.Max(1, d.TotalMinutes));
+        if (d.TotalHours < 24) return Loc.F("{0} ч", (int)d.TotalHours);
+        if (d.TotalDays < 2) return Loc.T("вчера");
+        return Loc.F("{0} дн", (int)d.TotalDays);
     }
 
     public static string Clock(TimeSpan t) =>

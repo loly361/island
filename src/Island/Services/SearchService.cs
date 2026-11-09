@@ -83,14 +83,14 @@ public sealed class SearchService
         if (query.Length == 0) return results;
 
         foreach (var app in SearchRanker.RankApps(_apps, query, 5))
-            results.Add(new SearchResult(ResultKind.App, app.Name, "Приложение", app.Path));
+            results.Add(new SearchResult(ResultKind.App, app.Name, Loc.T("Приложение"), app.Path));
 
         var files = await Task.Run(() => FindFiles(query, 5, ct), ct);
         results.AddRange(files);
 
         var encoded = Uri.EscapeDataString(query);
-        results.Add(new SearchResult(ResultKind.Ask, $"Спросить ИИ: «{query}»", "claude.ai", string.Format(settings.AskUrl, encoded)));
-        results.Add(new SearchResult(ResultKind.Web, $"Искать в браузере: «{query}»", "Поиск в интернете", string.Format(settings.SearchUrl, encoded)));
+        results.Add(new SearchResult(ResultKind.Ask, Loc.F("Спросить ИИ: «{0}»", query), "claude.ai", string.Format(settings.AskUrl, encoded)));
+        results.Add(new SearchResult(ResultKind.Web, Loc.F("Искать в браузере: «{0}»", query), Loc.T("Поиск в интернете"), string.Format(settings.SearchUrl, encoded)));
         return results;
     }
 

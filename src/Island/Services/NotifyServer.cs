@@ -145,7 +145,7 @@ public sealed class NotifyServer : IDisposable
 
         if (title.Length > 80) title = title[..80];
         if (message.Length > 300) message = message[..300];
-        Notified?.Invoke(string.IsNullOrWhiteSpace(title) ? "Уведомление" : title, message);
+        Notified?.Invoke(string.IsNullOrWhiteSpace(title) ? Loc.T("Уведомление") : title, message);
         res.StatusCode = 204;
         res.Close();
     }

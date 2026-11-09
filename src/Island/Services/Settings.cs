@@ -27,6 +27,8 @@ public sealed class Settings
     public string NotifyToken { get; set; } = "";
     /// <summary>"standard" shows the full pill; "minimal" collapses to a small circle that opens on hover.</summary>
     public string Mode { get; set; } = ModeStandard;
+    /// <summary>Interface language: "ru" or "fr". Read once at startup, so a change applies after a restart.</summary>
+    public string Language { get; set; } = "ru";
 
     public const string ModeStandard = "standard";
     public const string ModeMinimal = "minimal";
@@ -44,6 +46,7 @@ public sealed class Settings
         AccentHex = other.AccentHex;
         NotifyToken = other.NotifyToken;
         Mode = other.Mode;
+        Language = other.Language;
         Shortcuts = other.Shortcuts;
     }
     public List<AppShortcut> Shortcuts { get; set; } = new()

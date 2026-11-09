@@ -155,7 +155,7 @@ public static class ReminderParser
     {
         text = LeadRx.Replace(text, "");
         text = Regex.Replace(text, @"\s+", " ").Trim(' ', ',', '.', '-', '—', ':');
-        if (text.Length == 0) return "Напоминание";
+        if (text.Length == 0) return Loc.T("Напоминание");
         return char.ToUpperInvariant(text[0]) + text[1..];
     }
 }
@@ -175,14 +175,14 @@ public static class ReminderFormat
     public static string Due(DateTime due, bool daily, DateTime now)
     {
         var clock = due.ToString("HH:mm");
-        if (daily) return $"каждый день {clock}";
+        if (daily) return Loc.F("каждый день {0}", clock);
         var days = (due.Date - now.Date).Days;
         return days switch
         {
-            0 => $"сегодня {clock}",
-            1 => $"завтра {clock}",
-            > 1 and < 7 => $"{Short[(int)due.DayOfWeek]} {clock}",
-            _ => $"{due:dd.MM} {clock}",
+            0 => Loc.F("сегодня {0}", clock),
+            1 => Loc.F("завтра {0}", clock),
+            > 1 and < 7 => $"{Loc.T(Short[(int)due.DayOfWeek])} {clock}",
+            _ => $"{Loc.DayMonth(due)} {clock}",
         };
     }
 }

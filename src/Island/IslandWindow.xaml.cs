@@ -41,7 +41,7 @@ public sealed class SearchRow
 public sealed class NoteRow
 {
     public required Note Note { get; init; }
-    public string Title => string.IsNullOrWhiteSpace(Note.Title) ? "Новая заметка" : Note.Title;
+    public string Title => string.IsNullOrWhiteSpace(Note.Title) ? Loc.T("Новая заметка") : Note.Title;
 }
 
 public partial class IslandWindow : Window
@@ -194,7 +194,7 @@ public partial class IslandWindow : Window
             _hotkeyLabel = "";
         }
 
-        HotkeyHint.Text = _hotkeyLabel.Length == 0 ? "" : $"{_hotkeyLabel} — поиск";
+        HotkeyHint.Text = _hotkeyLabel.Length == 0 ? "" : Loc.F("{0} — поиск", _hotkeyLabel);
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -633,7 +633,7 @@ public partial class IslandWindow : Window
 
     private void OnMediaChanged(MediaSnapshot s)
     {
-        MediaTitle.Text = !s.HasSession ? "Ничего не играет" : string.IsNullOrWhiteSpace(s.Title) ? "Без названия" : s.Title;
+        MediaTitle.Text = !s.HasSession ? Loc.T("Ничего не играет") : string.IsNullOrWhiteSpace(s.Title) ? Loc.T("Без названия") : s.Title;
         MediaArtist.Text = s.Artist;
         if (s.Art is null)
         {
@@ -724,7 +724,7 @@ public partial class IslandWindow : Window
             {
                 Style = (Style)FindResource("IconBtn"),
                 Content = shortcut.Glyph,
-                ToolTip = shortcut.Name,
+                ToolTip = Loc.T(shortcut.Name),
                 Width = 42,
                 Height = 34,
                 Margin = new Thickness(0, 0, 2, 0),
@@ -761,7 +761,7 @@ public partial class IslandWindow : Window
         }
         catch (Exception ex)
         {
-            ShowAlert("Не получилось", ex.Message.Length > 80 ? ex.Message[..80] : ex.Message);
+            ShowAlert(Loc.T("Не получилось"), ex.Message.Length > 80 ? ex.Message[..80] : ex.Message);
         }
     }
 
@@ -771,12 +771,12 @@ public partial class IslandWindow : Window
         Collapse();
         if (string.IsNullOrEmpty(text))
         {
-            ShowAlert("В буфере нет текста", "");
+            ShowAlert(Loc.T("В буфере нет текста"), "");
             return;
         }
 
         SilentSetClipboard(text);
-        ShowAlert("Форматирование убрано", "Текст в буфере теперь без оформления");
+        ShowAlert(Loc.T("Форматирование убрано"), Loc.T("Текст в буфере теперь без оформления"));
     }
 
     private async Task RunScreenToolAsync(string tool)
@@ -796,7 +796,7 @@ public partial class IslandWindow : Window
                 {
                     ClipboardUtil.SetImage(ScreenTools.ToBitmapSource(shot));
                     var path = ScreenTools.SavePng(shot);
-                    result = ("Снимок экрана скопирован", Path.GetFileName(path));
+                    result = (Loc.T("Снимок экрана скопирован"), Path.GetFileName(path));
                     break;
                 }
                 case "area":
@@ -806,7 +806,7 @@ public partial class IslandWindow : Window
                         using var crop = ScreenTools.Crop(shot, area);
                         ClipboardUtil.SetImage(ScreenTools.ToBitmapSource(crop));
                         var path = ScreenTools.SavePng(crop);
-                        result = ("Скриншот скопирован", Path.GetFileName(path));
+                        result = (Loc.T("Скриншот скопирован"), Path.GetFileName(path));
                     }
 
                     break;
@@ -819,13 +819,13 @@ public partial class IslandWindow : Window
                         var text = (await ScreenTools.OcrAsync(crop))?.Trim();
                         if (string.IsNullOrEmpty(text))
                         {
-                            result = ("Текст не найден", "Выделите область покрупнее");
+                            result = (Loc.T("Текст не найден"), Loc.T("Выделите область покрупнее"));
                         }
                         else
                         {
                             SilentSetClipboard(text);
                             _clips.Add(text, "Текст с экрана");
-                            result = ("Текст скопирован", text.Replace('\n', ' ').Length > 60 ? text.Replace('\n', ' ')[..60] + "…" : text.Replace('\n', ' '));
+                            result = (Loc.T("Текст скопирован"), text.Replace('\n', ' ').Length > 60 ? text.Replace('\n', ' ')[..60] + "…" : text.Replace('\n', ' '));
                         }
                     }
 
@@ -841,7 +841,7 @@ public partial class IslandWindow : Window
                     {
                         SilentSetClipboard(hex);
                         _clips.Add(hex, "Пипетка");
-                        result = ("Цвет скопирован", hex);
+                        result = (Loc.T("Цвет скопирован"), hex);
                     }
 
                     break;
@@ -850,7 +850,7 @@ public partial class IslandWindow : Window
         }
         catch (Exception ex)
         {
-            result = ("Не получилось", ex.Message.Length > 80 ? ex.Message[..80] : ex.Message);
+            result = (Loc.T("Не получилось"), ex.Message.Length > 80 ? ex.Message[..80] : ex.Message);
         }
         finally
         {
@@ -907,7 +907,7 @@ public partial class IslandWindow : Window
         {
             Entry = e,
             Preview = Preview(e.Text),
-            Meta = $"{e.Source} · {TimeLabels.Ago(e.At, now)}",
+            Meta = $"{Loc.T(e.Source)} · {TimeLabels.Ago(e.At, now)}",
             Pinned = e.Pinned,
             PinGlyph = e.Pinned ? "" : "",
             PinBrush = e.Pinned ? (Brush)FindResource("AccentBrush") : (Brush)FindResource("SubBrush"),
@@ -915,7 +915,7 @@ public partial class IslandWindow : Window
 
         ClipList.ItemsSource = rows;
         ClipEmpty.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        ClipEmpty.Text = string.IsNullOrWhiteSpace(ClipSearch.Text) ? "Здесь появится всё, что вы копируете" : "Ничего не найдено";
+        ClipEmpty.Text = string.IsNullOrWhiteSpace(ClipSearch.Text) ? Loc.T("Здесь появится всё, что вы копируете") : Loc.T("Ничего не найдено");
     }
 
     private static string Preview(string text)
@@ -942,7 +942,7 @@ public partial class IslandWindow : Window
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {
             Collapse();
-            ShowAlert("Скопировано", Preview(row.Entry.Text));
+            ShowAlert(Loc.T("Скопировано"), Preview(row.Entry.Text));
             return;
         }
 
