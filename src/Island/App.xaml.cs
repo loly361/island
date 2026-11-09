@@ -94,7 +94,8 @@ public partial class App : Application
         _tray.DoubleClick += (_, _) => _window?.OpenHome();
     }
 
-    private void Quit()
+    /// <summary>Closes the window and exits; also used after the update installer has started.</summary>
+    public void Quit()
     {
         if (_tray is not null)
         {
@@ -131,7 +132,7 @@ public partial class App : Application
         return Drawing.Icon.FromHandle(bmp.GetHicon());
     }
 
-    private static void LogError(Exception ex)
+    internal static void LogError(Exception ex)
     {
         try
         {

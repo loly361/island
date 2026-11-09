@@ -128,6 +128,7 @@ public partial class IslandWindow : Window
         InitTimerAndReminders();
         InitInbox();
         InitAccent();
+        InitUpdates();
         _noteTimer.Tick += (_, _) => { _noteTimer.Stop(); SaveCurrentNote(); };
         _searchTimer.Tick += async (_, _) => { _searchTimer.Stop(); await RunSearchAsync(SearchBox.Text); };
 
@@ -232,6 +233,7 @@ public partial class IslandWindow : Window
         _reloadTimer.Stop();
         _settingsWatcher?.Dispose();
         _volume.Dispose();
+        StopUpdates();
     }
 
     // ---------- state machine and animation ----------

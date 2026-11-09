@@ -61,6 +61,23 @@ public class LocTests
     }
 
     [Fact]
+    public void English_TranslatesTextLabelsAndDates()
+    {
+        var now = new DateTime(2026, 11, 9, 12, 0, 0);
+        WithLanguage("en", () =>
+        {
+            Assert.Equal("en", Loc.Language);
+            Assert.Equal("en-US", Loc.Culture.Name);
+            Assert.Equal("Weather", Loc.T("Погода"));
+            Assert.Equal("Feels like 5°", Loc.F("Ощущается как {0}°", 5));
+            Assert.Equal("yesterday", TimeLabels.Ago(now.AddHours(-30), now));
+            Assert.Equal("tomorrow 21:00", ReminderFormat.Due(now.Date.AddDays(1).AddHours(21), false, now));
+            Assert.Equal("Nov 20 21:00", ReminderFormat.Due(new DateTime(2026, 11, 20, 21, 0, 0), false, now));
+            Assert.Equal("Строка без перевода", Loc.T("Строка без перевода"));
+        });
+    }
+
+    [Fact]
     public void XamlExtension_ParsesQuotedTextWithCommasAndBraces()
     {
         const string xaml =
@@ -113,17 +130,57 @@ public class LocCoverageTests
             .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
                         && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"));
 
+    public static TheoryData<string> Translated => new() { Loc.French, Loc.English };
+
+    private static IEnumerable<string> Holes(string text) =>
+        Regex.Matches(text, @"\{\d+[^}]*\}").Select(x => x.Value).Order();
+
     [Fact]
     public void Settings_CopyFromCopiesLanguage()
     {
         var target = new Settings();
         target.CopyFrom(new Settings { Language = "fr" });
         Assert.Equal("fr", target.Language);
+        target.CopyFrom(new Settings { Language = "en" });
+        Assert.Equal("en", target.Language);
         Assert.Equal("ru", new Settings().Language);
     }
 
+    [Theory]
+    [InlineData("ru", "ru")]
+    [InlineData("fr", "fr")]
+    [InlineData("FR", "fr")]
+    [InlineData("en", "en")]
+    [InlineData("En", "en")]
+    [InlineData("de", "ru")]
+    [InlineData("", "ru")]
+    [InlineData(null, "ru")]
+    public void Normalize_KnowsThreeLanguages(string? input, string expected) =>
+        Assert.Equal(expected, Loc.Normalize(input));
+
     [Fact]
-    public void EveryXamlKey_HasFrenchTranslation()
+    public void Dictionaries_HaveTheSameKeys()
+    {
+        var fr = Loc.Keys(Loc.French).ToHashSet();
+        var en = Loc.Keys(Loc.English).ToHashSet();
+        Assert.NotEmpty(fr);
+        Assert.Empty(fr.Except(en));
+        Assert.Empty(en.Except(fr));
+    }
+
+    [Theory]
+    [MemberData(nameof(Translated))]
+    public void EveryDictionaryEntry_KeepsPlaceholders(string language)
+    {
+        var problems = Loc.Keys(language)
+            .Where(key => !Holes(key).SequenceEqual(Holes(Loc.Translate(key, language))))
+            .ToList();
+        Assert.Empty(problems);
+    }
+
+    [Theory]
+    [MemberData(nameof(Translated))]
+    public void EveryXamlKey_HasTranslation(string language)
     {
         Assert.True(Directory.Exists(SourceDir), SourceDir);
         var missing = new List<string>();
@@ -132,14 +189,15 @@ public class LocCoverageTests
             foreach (Match m in Regex.Matches(File.ReadAllText(file), @"\{loc:T '((?:[^'\\]|\\.)*)'\}"))
             {
                 var key = Regex.Replace(m.Groups[1].Value, @"\\(.)", "$1");
-                if (!Loc.HasTranslation(key)) missing.Add(key);
+                if (!Loc.HasTranslation(key, language)) missing.Add(key);
             }
         }
         Assert.Empty(missing);
     }
 
-    [Fact]
-    public void EveryCodeKey_HasFrenchTranslationWithSamePlaceholders()
+    [Theory]
+    [MemberData(nameof(Translated))]
+    public void EveryCodeKey_HasTranslationWithSamePlaceholders(string language)
     {
         Assert.True(Directory.Exists(SourceDir), SourceDir);
         var problems = new List<string>();
@@ -148,11 +206,8 @@ public class LocCoverageTests
             foreach (Match m in Regex.Matches(File.ReadAllText(file), @"Loc\.[TF]\(""((?:[^""\\]|\\.)*)"""))
             {
                 var key = m.Groups[1].Value;
-                if (!Loc.HasTranslation(key)) { problems.Add("missing: " + key); continue; }
-                var fr = Loc.Translate(key, "fr");
-                var ruHoles = Regex.Matches(key, @"\{\d+[^}]*\}").Select(x => x.Value).Order();
-                var frHoles = Regex.Matches(fr, @"\{\d+[^}]*\}").Select(x => x.Value).Order();
-                if (!ruHoles.SequenceEqual(frHoles)) problems.Add("placeholders: " + key);
+                if (!Loc.HasTranslation(key, language)) { problems.Add("missing: " + key); continue; }
+                if (!Holes(key).SequenceEqual(Holes(Loc.Translate(key, language)))) problems.Add("placeholders: " + key);
             }
         }
         Assert.Empty(problems);

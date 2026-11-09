@@ -1,23 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Windows.Markup;
 
 namespace Island.Services;
 
 /// <summary>
-/// Interface language. Russian text is the key: <see cref="T(string)"/> returns the French translation when the
-/// language is "fr" and falls back to the Russian original when a translation is missing.
+/// Interface language. Russian text is the key: <see cref="T(string)"/> returns the translation for the current
+/// language ("fr" or "en") and falls back to the Russian original when a translation is missing.
 /// The language is chosen once at startup from settings; a change applies after a restart.
 /// </summary>
 public static class Loc
 {
     public const string Russian = "ru";
     public const string French = "fr";
+    public const string English = "en";
+
+    /// <summary>Every supported language, Russian first.</summary>
+    public static IReadOnlyList<string> Languages { get; } = new[] { Russian, French, English };
+
+    /// <summary>Languages that have a dictionary (all but Russian, which is the key itself).</summary>
+    public static IReadOnlyList<string> TranslatedLanguages { get; } = new[] { French, English };
 
     private static string _language = Russian;
 
-    /// <summary>"ru" (default) or "fr"; anything else falls back to Russian.</summary>
+    /// <summary>"ru" (default), "fr" or "en"; anything else falls back to Russian.</summary>
     public static string Language
     {
         get => _language;
@@ -25,10 +33,21 @@ public static class Loc
     }
 
     /// <summary>Culture for dates, weekdays and months shown to the user.</summary>
-    public static CultureInfo Culture => CultureInfo.GetCultureInfo(_language == French ? "fr-FR" : "ru-RU");
+    public static CultureInfo Culture => CultureFor(_language);
 
-    public static string Normalize(string? language) =>
-        string.Equals(language, French, StringComparison.OrdinalIgnoreCase) ? French : Russian;
+    public static CultureInfo CultureFor(string? language) => CultureInfo.GetCultureInfo(Normalize(language) switch
+    {
+        French => "fr-FR",
+        English => "en-US",
+        _ => "ru-RU",
+    });
+
+    public static string Normalize(string? language)
+    {
+        if (string.Equals(language, French, StringComparison.OrdinalIgnoreCase)) return French;
+        if (string.Equals(language, English, StringComparison.OrdinalIgnoreCase)) return English;
+        return Russian;
+    }
 
     /// <summary>Translates a Russian interface string into the current language.</summary>
     public static string T(string ru) => Translate(ru, _language);
@@ -37,13 +56,35 @@ public static class Loc
     public static string F(string ru, params object?[] args) => string.Format(T(ru), args);
 
     public static string Translate(string ru, string? language) =>
-        Normalize(language) == French && FrenchText.TryGetValue(ru, out var fr) ? fr : ru;
+        Dictionary(language) is { } text && text.TryGetValue(ru, out var translated) ? translated : ru;
 
-    public static bool HasTranslation(string ru) => FrenchText.ContainsKey(ru);
+    /// <summary>True when every translated language (fr and en) has the key.</summary>
+    public static bool HasTranslation(string ru) => TranslatedLanguages.All(l => HasTranslation(ru, l));
 
-    /// <summary>Short day and month, e.g. 09.11 in Russian and 09/11 in French.</summary>
-    public static string DayMonth(DateTime date) =>
-        _language == French ? date.ToString("dd/MM", Culture) : date.ToString("dd.MM");
+    /// <summary>True when the given language has the key; Russian always does, because the key is the Russian text.</summary>
+    public static bool HasTranslation(string ru, string? language) =>
+        Dictionary(language) is not { } text || text.ContainsKey(ru);
+
+    /// <summary>All keys of a language's dictionary (empty for Russian).</summary>
+    public static IReadOnlyCollection<string> Keys(string? language) =>
+        Dictionary(language)?.Keys ?? (IReadOnlyCollection<string>)Array.Empty<string>();
+
+    /// <summary>Short day and month: 09.11 in Russian, 09/11 in French, Nov 9 in English.</summary>
+    public static string DayMonth(DateTime date) => DayMonth(date, _language);
+
+    public static string DayMonth(DateTime date, string? language) => Normalize(language) switch
+    {
+        French => date.ToString("dd/MM", CultureFor(French)),
+        English => date.ToString("MMM d", CultureFor(English)),
+        _ => date.ToString("dd.MM", CultureInfo.InvariantCulture),
+    };
+
+    private static Dictionary<string, string>? Dictionary(string? language) => Normalize(language) switch
+    {
+        French => FrenchText,
+        English => EnglishText,
+        _ => null,
+    };
 
     private static readonly Dictionary<string, string> FrenchText = new(StringComparer.Ordinal)
     {
@@ -269,6 +310,274 @@ public static class Loc
             "Le lien doit commencer par http ou https et contenir {0} à l'endroit où la requête est insérée.",
         ["Координата — число: широта от −90 до 90, долгота от −180 до 180."] =
             "Une coordonnée est un nombre : latitude de −90 à 90, longitude de −180 à 180.",
+
+        // Updates
+        ["ОБНОВЛЕНИЯ"] = "MISES À JOUR",
+        ["Версия {0}"] = "Version {0}",
+        ["Проверять обновления автоматически"] = "Rechercher les mises à jour automatiquement",
+        ["Вкл"] = "Activé",
+        ["Выкл"] = "Désactivé",
+        ["Проверить сейчас"] = "Vérifier maintenant",
+        ["Обновить до {0}"] = "Mettre à jour vers {0}",
+        ["Проверка…"] = "Vérification…",
+        ["У вас последняя версия"] = "Vous avez la dernière version",
+        ["Доступна версия {0}"] = "Version {0} disponible",
+        ["Загрузка…"] = "Téléchargement…",
+        ["Загрузка… {0}%"] = "Téléchargement… {0} %",
+        ["Не удалось проверить обновления"] = "Impossible de vérifier les mises à jour",
+        ["Не удалось скачать обновление"] = "Impossible de télécharger la mise à jour",
+        ["Файл обновления повреждён или подменён"] = "Le fichier de mise à jour est endommagé ou modifié",
+        ["Установка обновления…"] = "Installation de la mise à jour…",
+        ["Не удалось запустить установщик"] = "Impossible de lancer le programme d'installation",
+        ["Доступна новая версия Island"] = "Une nouvelle version d'Island est disponible",
+        ["Версия {0}. Обновить можно в настройках."] = "Version {0}. Mise à jour depuis les paramètres.",
+    };
+
+    private static readonly Dictionary<string, string> EnglishText = new(StringComparer.Ordinal)
+    {
+        // Tray menu
+        ["Открыть"] = "Open",
+        ["Запускать вместе с Windows"] = "Start with Windows",
+        ["Показывать уведомления Windows"] = "Show Windows notifications",
+        ["Папка с данными"] = "Data folder",
+        ["Выход"] = "Exit",
+
+        // Tabs and header
+        ["Главная"] = "Home",
+        ["Буфер обмена"] = "Clipboard",
+        ["Уведомления"] = "Notifications",
+        ["Заметки, таймер и напоминания"] = "Notes, timer and reminders",
+        ["Погода"] = "Weather",
+        ["Управление"] = "Controls",
+        ["Поиск"] = "Search",
+        ["Настройки"] = "Settings",
+        ["Закрепить открытым"] = "Keep open",
+        ["{0} — поиск"] = "{0} — search",
+
+        // Home
+        ["МУЗЫКА"] = "MUSIC",
+        ["Ничего не играет"] = "Nothing playing",
+        ["Без названия"] = "Untitled",
+        ["Область"] = "Region",
+        ["Весь экран"] = "Full screen",
+        ["Текст с экрана"] = "Screen text",
+        ["Пипетка"] = "Color picker",
+        ["Чистый текст"] = "Plain text",
+        ["Скриншоты"] = "Screenshots",
+        ["Не получилось"] = "Failed",
+        ["В буфере нет текста"] = "No text in the clipboard",
+        ["Форматирование убрано"] = "Formatting removed",
+        ["Текст в буфере теперь без оформления"] = "Clipboard text is now plain",
+        ["Снимок экрана скопирован"] = "Screenshot copied",
+        ["Скриншот скопирован"] = "Screenshot copied",
+        ["Текст не найден"] = "No text found",
+        ["Выделите область покрупнее"] = "Select a larger area",
+        ["Текст скопирован"] = "Text copied",
+        ["Цвет скопирован"] = "Color copied",
+
+        // Clipboard
+        ["Поиск по буферу"] = "Search clipboard",
+        ["Очистить (закреплённые остаются)"] = "Clear (pinned items stay)",
+        ["Здесь появится всё, что вы копируете"] = "Everything you copy will appear here",
+        ["Ничего не найдено"] = "Nothing found",
+        ["Клик — вставить · Shift+клик — только копировать"] = "Click — paste · Shift+click — copy only",
+        ["Скопировано"] = "Copied",
+        ["Буфер"] = "Clipboard",
+        ["Яндекс Браузер"] = "Yandex Browser",
+
+        // Relative time
+        ["сейчас"] = "now",
+        ["{0} мин"] = "{0} min",
+        ["{0} ч"] = "{0} h",
+        ["вчера"] = "yesterday",
+        ["{0} дн"] = "{0} d",
+
+        // Notifications
+        ["Уведомления Windows"] = "Windows notifications",
+        ["Очистить список (в Windows уведомления остаются)"] = "Clear list (notifications stay in Windows)",
+        ["Уведомление"] = "Notification",
+        ["Показ уведомлений Windows выключен. Включить его можно в меню значка в трее."] =
+            "Windows notifications are hidden. Turn them on in the tray icon menu.",
+        ["Windows не даёт доступ к уведомлениям, когда программа лежит в папке с очень длинным путём. Перенесите её, например, в Загрузки."] =
+            "Windows blocks notification access when the app sits in a folder with a very long path. Move it, for example, to Downloads.",
+        ["Нет доступа к уведомлениям Windows. Разрешите его в Параметры → Конфиденциальность и защита → Уведомления."] =
+            "No access to Windows notifications. Allow it in Settings → Privacy & security → Notifications.",
+        ["Новых уведомлений нет"] = "No new notifications",
+
+        // Notes
+        ["Новая заметка"] = "New note",
+        ["Начните писать…"] = "Start typing…",
+        ["Нажмите + и создайте заметку"] = "Press + to create a note",
+        ["Жирный"] = "Bold",
+        ["Курсив"] = "Italic",
+        ["Зачёркнутый"] = "Strikethrough",
+        ["Убрать форматирование"] = "Clear formatting",
+        ["Маркированный список"] = "Bulleted list",
+        ["Нумерованный список"] = "Numbered list",
+        ["Задачи с галочками"] = "Checklist",
+        ["Напомнить об этой заметке"] = "Remind me about this note",
+        ["Скопировать заметку"] = "Copy note",
+        ["Удалить заметку"] = "Delete note",
+
+        // Timer
+        ["Старт"] = "Start",
+        ["Пауза"] = "Pause",
+        ["Продолжить"] = "Resume",
+        ["Сбросить"] = "Reset",
+        ["Своё время"] = "Custom",
+        ["мин"] = "min",
+        ["Минут и Enter"] = "Minutes, then Enter",
+        ["Таймер завершён"] = "Timer done",
+        ["{0} мин прошло"] = "{0} min elapsed",
+
+        // Reminders (the parser understands English, French and Russian phrases)
+        ["Напоминания"] = "Reminders",
+        ["Напоминание"] = "Reminder",
+        ["{0} и ещё {1}"] = "{0} and {1} more",
+        ["Позвонить маме завтра в 9"] = "Call mom tomorrow at 9",
+        ["Напишите ниже, о чём и когда: «позвонить маме завтра в 9», «таблетки каждый день в 23:00», «через 20 минут выключить плиту»."] =
+            "Type what and when below: “call mom tomorrow at 9”, “pills every day at 11pm”, “in 20 minutes turn off the stove”.",
+        ["Не удалось понять, когда напомнить. Например: «завтра в 9», «через 20 минут», «каждый день в 23:00»."] =
+            "Couldn't tell when to remind you. Try: “tomorrow at 9”, “in 20 minutes”, “every day at 11pm”.",
+        ["каждый день {0}"] = "daily {0}",
+        ["сегодня {0}"] = "today {0}",
+        ["завтра {0}"] = "tomorrow {0}",
+        ["вс"] = "Sun",
+        ["пн"] = "Mon",
+        ["вт"] = "Tue",
+        ["ср"] = "Wed",
+        ["чт"] = "Thu",
+        ["пт"] = "Fri",
+        ["сб"] = "Sat",
+
+        // Weather
+        ["Обновить"] = "Refresh",
+        ["ВЕТЕР"] = "WIND",
+        ["ВЛАЖН."] = "HUMID.",
+        ["ОСАДКИ"] = "PRECIP.",
+        ["Данные Open-Meteo"] = "Data: Open-Meteo",
+        ["Нет данных"] = "No data",
+        ["Проверьте подключение к интернету и нажмите обновить."] = "Check your internet connection, then refresh.",
+        ["Ощущается как {0}°"] = "Feels like {0}°",
+        ["Ощущается как {0}° · {1}°…{2}°"] = "Feels like {0}° · {1}°…{2}°",
+        ["{0:0.#} м/с"] = "{0:0.#} m/s",
+        ["Направление: {0}"] = "Direction: {0}",
+        ["{0:0.#} мм"] = "{0:0.#} mm",
+        ["Восход {0:HH:mm} · закат {1:HH:mm}"] = "Sunrise {0:HH:mm} · sunset {1:HH:mm}",
+        ["Сейчас"] = "Now",
+        ["Сегодня"] = "Today",
+        ["Вс"] = "Sun",
+        ["Пн"] = "Mon",
+        ["Вт"] = "Tue",
+        ["Ср"] = "Wed",
+        ["Чт"] = "Thu",
+        ["Пт"] = "Fri",
+        ["Сб"] = "Sat",
+        ["Ясно"] = "Clear",
+        ["Преимущественно ясно"] = "Mostly clear",
+        ["Переменная облачность"] = "Partly cloudy",
+        ["Пасмурно"] = "Overcast",
+        ["Туман"] = "Fog",
+        ["Морось"] = "Drizzle",
+        ["Ледяной дождь"] = "Freezing rain",
+        ["Дождь"] = "Rain",
+        ["Снег"] = "Snow",
+        ["Ливень"] = "Showers",
+        ["Снегопад"] = "Snowfall",
+        ["Гроза"] = "Thunderstorm",
+        ["С"] = "N",
+        ["СВ"] = "NE",
+        ["В"] = "E",
+        ["ЮВ"] = "SE",
+        ["Ю"] = "S",
+        ["ЮЗ"] = "SW",
+        ["З"] = "W",
+        ["СЗ"] = "NW",
+
+        // Control
+        ["Включён"] = "On",
+        ["Выключен"] = "Off",
+        ["Включена"] = "On",
+        ["Выключена"] = "Off",
+        ["Подключён"] = "Connected",
+        ["Не настроен"] = "Not set up",
+        ["Недоступно"] = "Unavailable",
+        ["Тёмная тема"] = "Dark theme",
+        ["Блокировка"] = "Lock",
+        ["Сон"] = "Sleep",
+        ["Перезагрузка"] = "Restart",
+        ["Выключение"] = "Shut down",
+        ["Точно?"] = "Sure?",
+
+        // Search
+        ["Программы, файлы, вопрос к ИИ"] = "Apps, files, ask AI",
+        ["Программы, файлы из индекса Windows, вопрос к ИИ или поиск в браузере"] =
+            "Apps, files from the Windows index, a question for AI or a web search",
+        ["↑↓ — выбор · Enter — открыть · Esc — закрыть"] = "↑↓ — select · Enter — open · Esc — close",
+        ["Приложение"] = "App",
+        ["Спросить ИИ: «{0}»"] = "Ask AI: “{0}”",
+        ["Искать в браузере: «{0}»"] = "Search the web: “{0}”",
+        ["Поиск в интернете"] = "Web search",
+
+        // App shortcuts (default names stored in settings.json)
+        ["Проводник"] = "File Explorer",
+        ["Терминал"] = "Terminal",
+        ["Блокнот"] = "Notepad",
+        ["Калькулятор"] = "Calculator",
+        ["Параметры"] = "Settings",
+
+        // Settings
+        ["ЯЗЫК"] = "LANGUAGE",
+        ["Язык изменится после перезапуска."] = "The language will change after a restart.",
+        ["РЕЖИМ"] = "MODE",
+        ["Стандартный"] = "Standard",
+        ["Минималистичный"] = "Minimal",
+        ["Минималистичный: маленький кружок, при наведении открывается остров."] =
+            "Minimal: a small dot that opens the island on hover.",
+        ["ПОГОДА"] = "WEATHER",
+        ["Город"] = "City",
+        ["Например, Москва"] = "For example, London",
+        ["Широта"] = "Latitude",
+        ["Долгота"] = "Longitude",
+        ["ПОИСК И ИИ"] = "SEARCH AND AI",
+        ["адрес с {0}"] = "URL with {0}",
+        ["Спросить ИИ"] = "Ask AI",
+        ["ОФОРМЛЕНИЕ"] = "APPEARANCE",
+        ["Акцентный цвет"] = "Accent color",
+        ["Из обоев"] = "Wallpaper",
+        ["Синий"] = "Blue",
+        ["Розовый"] = "Pink",
+        ["Оранжевый"] = "Orange",
+        ["Зелёный"] = "Green",
+        ["СИСТЕМА"] = "SYSTEM",
+        ["Порт уведомлений {0} нужен для хука Claude Code. Меняется в settings.json, после этого нужен перезапуск."] =
+            "Notification port {0} is used by the Claude Code hook. Change it in settings.json, then restart.",
+        ["Файл настроек"] = "Settings file",
+        ["Ссылка должна начинаться с http или https и содержать {0} там, где вставляется запрос."] =
+            "The link must start with http or https and contain {0} where the query goes.",
+        ["Координата — число: широта от −90 до 90, долгота от −180 до 180."] =
+            "A coordinate is a number: latitude −90 to 90, longitude −180 to 180.",
+
+        // Updates
+        ["ОБНОВЛЕНИЯ"] = "UPDATES",
+        ["Версия {0}"] = "Version {0}",
+        ["Проверять обновления автоматически"] = "Check for updates automatically",
+        ["Вкл"] = "On",
+        ["Выкл"] = "Off",
+        ["Проверить сейчас"] = "Check now",
+        ["Обновить до {0}"] = "Update to {0}",
+        ["Проверка…"] = "Checking…",
+        ["У вас последняя версия"] = "You have the latest version",
+        ["Доступна версия {0}"] = "Version {0} is available",
+        ["Загрузка…"] = "Downloading…",
+        ["Загрузка… {0}%"] = "Downloading… {0}%",
+        ["Не удалось проверить обновления"] = "Couldn't check for updates",
+        ["Не удалось скачать обновление"] = "Couldn't download the update",
+        ["Файл обновления повреждён или подменён"] = "The update file is damaged or was altered",
+        ["Установка обновления…"] = "Installing the update…",
+        ["Не удалось запустить установщик"] = "Couldn't start the installer",
+        ["Доступна новая версия Island"] = "A new version of Island is available",
+        ["Версия {0}. Обновить можно в настройках."] = "Version {0}. You can update it in Settings.",
     };
 }
 

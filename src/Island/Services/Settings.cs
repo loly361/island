@@ -27,8 +27,12 @@ public sealed class Settings
     public string NotifyToken { get; set; } = "";
     /// <summary>"standard" shows the full pill; "minimal" collapses to a small circle that opens on hover.</summary>
     public string Mode { get; set; } = ModeStandard;
-    /// <summary>Interface language: "ru" or "fr". Read once at startup, so a change applies after a restart.</summary>
+    /// <summary>Interface language: "ru", "fr" or "en". Read once at startup, so a change applies after a restart.</summary>
     public string Language { get; set; } = "ru";
+    /// <summary>Look for a new release on GitHub 30 seconds after start and then once a day.</summary>
+    public bool AutoUpdateCheck { get; set; } = true;
+    /// <summary>The release version the user has already been told about; no further pop-up until a newer one appears.</summary>
+    public string? DismissedUpdateVersion { get; set; }
 
     public const string ModeStandard = "standard";
     public const string ModeMinimal = "minimal";
@@ -47,6 +51,8 @@ public sealed class Settings
         NotifyToken = other.NotifyToken;
         Mode = other.Mode;
         Language = other.Language;
+        AutoUpdateCheck = other.AutoUpdateCheck;
+        DismissedUpdateVersion = other.DismissedUpdateVersion;
         Shortcuts = other.Shortcuts;
     }
     public List<AppShortcut> Shortcuts { get; set; } = new()

@@ -67,6 +67,7 @@ public partial class IslandWindow
         _ = RefreshAccentAsync(animate: true);
         RenderModeButtons();
         RenderLanguageButtons();
+        RenderUpdateCard();
         ApplyMode();
     }
 
@@ -82,14 +83,16 @@ public partial class IslandWindow
         BuildAccentSwatches();
         RenderModeButtons();
         RenderLanguageButtons();
+        RenderUpdateCard();
     }
 
     /// <summary>Highlights the saved language; the running window keeps the language it started with until a restart.</summary>
     private void RenderLanguageButtons()
     {
-        var french = Loc.Normalize(_settings.Language) == Loc.French;
-        StyleModeButton(LanguageRuButton, !french);
-        StyleModeButton(LanguageFrButton, french);
+        var language = Loc.Normalize(_settings.Language);
+        StyleModeButton(LanguageRuButton, language == Loc.Russian);
+        StyleModeButton(LanguageFrButton, language == Loc.French);
+        StyleModeButton(LanguageEnButton, language == Loc.English);
     }
 
     private void Language_Click(object sender, RoutedEventArgs e)
