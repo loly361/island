@@ -7,31 +7,47 @@ namespace Island.Services;
 
 public sealed record ParsedReminder(string Text, DateTime Due, bool Daily);
 
-/// <summary>Understands short Russian phrases such as «позвонить маме завтра в 9» or «через 20 минут выключить плиту».</summary>
+/// <summary>
+/// Understands short phrases in Russian («позвонить маме завтра в 9», «через 20 минут выключить плиту») and in French
+/// («appeler maman demain à 9», «dans 20 minutes éteindre la plaque»). The words of the input decide the language,
+/// not the interface setting.
+/// </summary>
 public static class ReminderParser
 {
     private const RegexOptions Opts = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
 
-    private static readonly Regex DailyRx = new(@"\b(каждый\s+день|ежедневно)\b", Opts);
+    private static readonly Regex DailyRx = new(
+        @"\b(каждый\s+день|ежедневно|tous\s+les\s+jours|chaque\s+jour|quotidiennement)\b", Opts);
 
     private static readonly Regex RelativeRx = new(
         @"\bчерез\s+(?:(\d+)\s*(сек\w*|мин\w*|час\w*|ч|дн\w*|день|дня|дней)|(полчаса)|(час|минуту|секунду|день))(?!\w)", Opts);
 
-    private static readonly Regex DayWordRx = new(@"\b(сегодня|завтра|послезавтра)\b", Opts);
+    private static readonly Regex RelativeFrRx = new(
+        @"\bdans\s+(?:(\d+)\s*(secondes?|minutes?|heures?|h|jours?)|(une\s+demi-heure)|(une\s+heure|une\s+minute|une\s+seconde|un\s+jour))(?!\w)", Opts);
+
+    private static readonly Regex DayWordRx = new(
+        @"\b(сегодня|завтра|послезавтра|aujourd['’]hui|demain|après-demain)\b", Opts);
 
     private static readonly Regex WeekdayRx = new(
-        @"\b(?:в|во)\s+(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)\b", Opts);
+        @"\b(?:(?:в|во)\s+(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)|(?:le\s+)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche))\b", Opts);
 
     private static readonly Regex TimeRx = new(
         @"\b(?:в|к)\s+(\d{1,2})(?:[:.](\d{2}))?(?:\s*час(?:ов|а)?)?(?:\s+(утра|дня|вечера|ночи))?(?!\d)", Opts);
 
-    private static readonly Regex PartOfDayRx = new(@"\b(утром|днём|днем|вечером|ночью)\b", Opts);
+    private static readonly Regex TimeFrRx = new(
+        @"\bà\s+(\d{1,2})(?:[:h](\d{2}))?(?:\s*h(?:eures?)?)?(?!\w)", Opts);
+
+    private static readonly Regex PartOfDayRx = new(
+        @"\b(утром|днём|днем|вечером|ночью|matin|après-midi|soir|nuit)\b", Opts);
 
     private static readonly Regex LeadRx = new(
-        @"^\s*(?:напомни(?:ть)?|напоминай)(?:\s+мне)?\s*(?:,|что|о\s+том,?\s+что)?\s*", Opts);
+        @"^\s*(?:(?:напомни(?:ть)?|напоминай)(?:\s+мне)?|(?:rappelle-moi|rappelez-moi)(?:\s+de|\s+que)?)\s*(?:,|что|о\s+том,?\s+что)?\s*", Opts);
 
     private static readonly string[] Weekdays =
         { "воскресенье", "понедельник", "вторник", "среду", "четверг", "пятницу", "субботу" };
+
+    private static readonly string[] FrenchWeekdays =
+        { "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi" };
 
     public static ParsedReminder? Parse(string? input, DateTime now)
     {
@@ -43,6 +59,8 @@ public static class ReminderParser
         DateTime? relative = null;
         if (Take(RelativeRx, ref rest) is { } rel)
             relative = now + RelativeSpan(rel);
+        else if (Take(RelativeFrRx, ref rest) is { } relFr)
+            relative = now + RelativeSpanFr(relFr);
 
         int? dayOffset = null;
         string? dayWord = null;
@@ -50,28 +68,30 @@ public static class ReminderParser
         {
             if (Take(WeekdayRx, ref rest) is { } wd)
             {
-                var target = Array.IndexOf(Weekdays, wd.Groups[1].Value.ToLowerInvariant());
+                var name = (wd.Groups[1].Success ? wd.Groups[1].Value : wd.Groups[2].Value).ToLowerInvariant();
+                var target = Array.IndexOf(Weekdays, name);
+                if (target < 0) target = Array.IndexOf(FrenchWeekdays, name);
                 dayOffset = (target - (int)now.DayOfWeek + 7) % 7;
                 dayWord = "weekday";
             }
             else if (Take(DayWordRx, ref rest) is { } dw)
             {
-                dayWord = dw.Groups[1].Value.ToLowerInvariant();
+                dayWord = CanonicalDay(dw.Groups[1].Value);
                 dayOffset = dayWord switch { "завтра" => 1, "послезавтра" => 2, _ => 0 };
             }
         }
 
         TimeSpan? time = null;
-        if (relative is null && Take(TimeRx, ref rest) is { } tm) time = ParseTime(tm);
+        if (relative is null && (Take(TimeRx, ref rest) ?? Take(TimeFrRx, ref rest)) is { } tm) time = ParseTime(tm);
 
         TimeSpan? partOfDay = null;
         if (relative is null && Take(PartOfDayRx, ref rest) is { } pd)
         {
             partOfDay = pd.Groups[1].Value.ToLowerInvariant() switch
             {
-                "утром" => TimeSpan.FromHours(9),
-                "днём" or "днем" => TimeSpan.FromHours(13),
-                "вечером" => TimeSpan.FromHours(19),
+                "утром" or "matin" => TimeSpan.FromHours(9),
+                "днём" or "днем" or "après-midi" => TimeSpan.FromHours(13),
+                "вечером" or "soir" => TimeSpan.FromHours(19),
                 _ => TimeSpan.FromHours(23),
             };
         }
@@ -107,6 +127,15 @@ public static class ReminderParser
         return m;
     }
 
+    /// <summary>Maps the French day words onto the Russian ones the rest of the parser uses.</summary>
+    private static string CanonicalDay(string word) => word.ToLowerInvariant().Replace('’', '\'') switch
+    {
+        "aujourd'hui" => "сегодня",
+        "demain" => "завтра",
+        "après-demain" => "послезавтра",
+        var w => w,
+    };
+
     private static TimeSpan RelativeSpan(Match m)
     {
         if (m.Groups[3].Success) return TimeSpan.FromMinutes(30);
@@ -126,6 +155,28 @@ public static class ReminderParser
         if (unit.StartsWith("сек")) return TimeSpan.FromSeconds(n);
         if (unit.StartsWith("мин")) return TimeSpan.FromMinutes(n);
         if (unit.StartsWith("час") || unit == "ч") return TimeSpan.FromHours(n);
+        return TimeSpan.FromDays(n);
+    }
+
+    private static TimeSpan RelativeSpanFr(Match m)
+    {
+        if (m.Groups[3].Success) return TimeSpan.FromMinutes(30);
+        if (m.Groups[4].Success)
+        {
+            return m.Groups[4].Value.ToLowerInvariant() switch
+            {
+                "une heure" => TimeSpan.FromHours(1),
+                "une minute" => TimeSpan.FromMinutes(1),
+                "une seconde" => TimeSpan.FromSeconds(1),
+                _ => TimeSpan.FromDays(1),
+            };
+        }
+
+        var n = int.Parse(m.Groups[1].Value);
+        var unit = m.Groups[2].Value.ToLowerInvariant();
+        if (unit.StartsWith("seconde")) return TimeSpan.FromSeconds(n);
+        if (unit.StartsWith("minute")) return TimeSpan.FromMinutes(n);
+        if (unit == "h" || unit.StartsWith("heure")) return TimeSpan.FromHours(n);
         return TimeSpan.FromDays(n);
     }
 

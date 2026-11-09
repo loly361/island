@@ -951,7 +951,7 @@
                                     <ListBox x:Name="ReminderList" Grid.Row="1" Style="{StaticResource PlainList}" ItemTemplate="{StaticResource ReminderRowTemplate}" Margin="0,4,0,4"/>
                                     <TextBlock x:Name="ReminderEmpty" Grid.Row="1" Foreground="{StaticResource SubBrush}" FontSize="10" TextAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center" Margin="4"
                                                Text="{loc:T 'Напишите ниже, о чём и когда: «позвонить маме завтра в 9», «таблетки каждый день в 23:00», «через 20 минут выключить плиту».'}"/>
-                                    <TextBox x:Name="ReminderBox" Grid.Row="2" Style="{StaticResource PlainInput}" Tag="Позвонить маме завтра в 9" KeyDown="ReminderBox_KeyDown"/>
+                                    <TextBox x:Name="ReminderBox" Grid.Row="2" Style="{StaticResource PlainInput}" Tag="{loc:T 'Позвонить маме завтра в 9'}" KeyDown="ReminderBox_KeyDown"/>
                                     <TextBlock x:Name="ReminderHint" Grid.Row="3" Foreground="#FF7A8C" FontSize="10" TextWrapping="Wrap" Margin="2,4,0,0" Visibility="Collapsed"/>
                                 </Grid>
                             </Border>

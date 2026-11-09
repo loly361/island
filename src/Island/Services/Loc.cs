@@ -142,14 +142,15 @@ public static class Loc
         ["Таймер завершён"] = "Minuteur terminé",
         ["{0} мин прошло"] = "{0} min écoulées",
 
-        // Reminders (the parser understands Russian only, so the examples stay in Russian)
+        // Reminders (the parser understands French and Russian phrases)
         ["Напоминания"] = "Rappels",
         ["Напоминание"] = "Rappel",
         ["{0} и ещё {1}"] = "{0} et {1} de plus",
+        ["Позвонить маме завтра в 9"] = "Appeler maman demain à 9",
         ["Напишите ниже, о чём и когда: «позвонить маме завтра в 9», «таблетки каждый день в 23:00», «через 20 минут выключить плиту»."] =
-            "Écrivez ci-dessous quoi et quand, en russe : «позвонить маме завтра в 9», «таблетки каждый день в 23:00», «через 20 минут выключить плиту».",
+            "Écrivez ci-dessous quoi et quand, par exemple : «appeler maman demain à 9», «cachets tous les jours à 23:00», «dans 20 minutes éteindre la plaque».",
         ["Не удалось понять, когда напомнить. Например: «завтра в 9», «через 20 минут», «каждый день в 23:00»."] =
-            "Impossible de comprendre quand rappeler. Écrivez en russe, par exemple : «завтра в 9», «через 20 минут», «каждый день в 23:00».",
+            "Impossible de comprendre quand rappeler. Par exemple : «demain à 9», «dans 20 minutes», «tous les jours à 23:00».",
         ["каждый день {0}"] = "chaque jour {0}",
         ["сегодня {0}"] = "aujourd'hui {0}",
         ["завтра {0}"] = "demain {0}",
