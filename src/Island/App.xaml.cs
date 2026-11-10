@@ -57,6 +57,8 @@ public partial class App : Application
         _window = new IslandWindow(settings, clips, notes);
         _window.Show();
         BuildTray(settings);
+        // Log-off or shutdown while recording: finish the MP4 before Windows ends the process.
+        SessionEnding += (_, _) => _window?.FinishRecordingNow();
     }
 
     private void BuildTray(Settings settings)
@@ -64,6 +66,12 @@ public partial class App : Application
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add(Loc.T("Открыть"), null, (_, _) => _window?.OpenHome());
         menu.Items.Add(Loc.T("Поиск"), null, (_, _) => _window?.OpenSearch());
+
+        // Shown only while a screen recording runs, so it can be stopped from a full-screen game too.
+        var stopRecording = new Forms.ToolStripMenuItem(Loc.T("Остановить запись")) { Visible = false };
+        stopRecording.Click += (_, _) => _window?.StopRecording();
+        menu.Items.Add(stopRecording);
+        menu.Opening += (_, _) => stopRecording.Visible = _window?.IsRecording == true;
 
         var autostart = new Forms.ToolStripMenuItem(Loc.T("Запускать вместе с Windows")) { Checked = Autostart.IsEnabled(), CheckOnClick = true };
         autostart.CheckedChanged += (_, _) => Autostart.Set(autostart.Checked);

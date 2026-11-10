@@ -22,6 +22,19 @@ public static class SystemUtil
         }
     }
 
+    /// <summary>Opens Explorer on the file's folder with the file selected.</summary>
+    public static void RevealInExplorer(string path)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+        }
+        catch
+        {
+            Launch(System.IO.Path.GetDirectoryName(path) ?? path);
+        }
+    }
+
     public static string FriendlyProcessName(string? process) => (process ?? "").ToLowerInvariant() switch
     {
         "" => "Буфер",

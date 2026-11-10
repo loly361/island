@@ -19,6 +19,7 @@
         <SolidColorBrush x:Key="SubBrush" Color="#99FFFFFF"/>
         <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF"/>
         <SolidColorBrush x:Key="TimerBrush" Color="#FF9F0A"/>
+        <SolidColorBrush x:Key="RecordBrush" Color="#FF453A"/>
         <!-- Icon buttons take an icon name as content (e.g. Content="trash"); the selector draws it with local:Icon. -->
         <local:IconContentSelector x:Key="IconContent"/>
         <!-- Concentric radii: the panel is 34, cards inset by 14 get 22, rows and tiles inside cards get 14. -->
@@ -656,10 +657,16 @@
                     </Grid>
                     <TextBlock x:Name="TimerChipText" Foreground="{StaticResource TimerBrush}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 </StackPanel>
+                <!-- Screen recording in progress: red dot and elapsed time -->
+                <StackPanel x:Name="RecChip" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed">
+                    <Ellipse Width="8" Height="8" Fill="{StaticResource RecordBrush}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="RecChipText" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Alert: notifications, reminders and tool results -->
-            <Grid x:Name="AlertView" Width="390" Height="62" Margin="14,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed" Opacity="0">
+            <Grid x:Name="AlertView" Width="390" Height="62" Margin="14,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed" Opacity="0"
+                  Background="Transparent" MouseLeftButtonUp="Alert_MouseLeftButtonUp">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -697,6 +704,13 @@
                         <RadioButton x:Name="TabSettings" Style="{StaticResource TabBtn}" Content="gearshape" Tag="7" ToolTip="{loc:T 'Настройки'}" Checked="Tab_Checked"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="RecStopButton" Style="{StaticResource PresetBtn}" Height="28" Margin="0,0,6,0" VerticalAlignment="Center" Visibility="Collapsed"
+                                ToolTip="{loc:T 'Остановить запись'}" Click="RecStop_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <local:Icon Kind="stop.fill" Size="11" Foreground="{StaticResource RecordBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="RecStopText" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <Button x:Name="PinButton" Style="{StaticResource IconBtn}" Content="pin" ToolTip="{loc:T 'Закрепить открытым'}" Click="Pin_Click"/>
                     </StackPanel>
                 </Grid>
@@ -755,7 +769,8 @@
                                     </StackPanel>
                                 </Grid>
                             </Border>
-                            <UniformGrid Grid.Column="1" Columns="3" Rows="2" Margin="6,0,0,0">
+                            <Grid Grid.Column="1" Margin="6,0,0,0">
+                            <UniformGrid x:Name="ToolTiles" Columns="3" Rows="3">
                                 <Button Style="{StaticResource Tile}" Tag="area" Click="Action_Click">
                                     <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="crop" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Область'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
@@ -774,7 +789,37 @@
                                 <Button Style="{StaticResource Tile}" Tag="folder" Click="Action_Click">
                                     <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="folder" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Скриншоты'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
+                                <Button x:Name="RecordTile" Style="{StaticResource Tile}" Click="Record_Click">
+                                    <StackPanel><local:Icon x:Name="RecordTileGlyph" Style="{StaticResource Glyph}" Kind="record.circle" HorizontalAlignment="Center"/><TextBlock x:Name="RecordTileLabel" Text="{loc:T 'Запись экрана'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource Tile}" Tag="videos" Click="Action_Click">
+                                    <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="video" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Видео'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                </Button>
                             </UniformGrid>
+                            <!-- Screen recording: what to record, shown in place of the tiles -->
+                            <Border x:Name="RecordChoice" Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Margin="3" Padding="10" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="{loc:T 'Что записать?'}" Foreground="{StaticResource TextBrush}" FontSize="12" FontWeight="SemiBold" Margin="4,0,0,6"/>
+                                    <UniformGrid Grid.Row="1" Columns="2">
+                                        <Button Style="{StaticResource Tile}" Tag="area" Background="{StaticResource Surface2}" Click="RecordChoice_Click">
+                                            <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="crop" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Область'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource Tile}" Tag="full" Background="{StaticResource Surface2}" Click="RecordChoice_Click">
+                                            <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="arrows.expand" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Весь экран'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                        </Button>
+                                    </UniformGrid>
+                                    <Grid Grid.Row="2" Margin="4,8,0,0">
+                                        <TextBlock Text="{loc:T 'Без звука, до 30 минут'}" Foreground="{StaticResource SubBrush}" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,70,0"/>
+                                        <Button Style="{StaticResource PresetBtn}" Content="{loc:T 'Отмена'}" Tag="cancel" HorizontalAlignment="Right" Margin="0" Click="RecordChoice_Click"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                            </Grid>
                         </Grid>
 
                         <Grid Grid.Row="1" Margin="2,12,2,0">
@@ -1147,6 +1192,21 @@
                                         <Button x:Name="ModeMinimalButton" Style="{StaticResource PresetBtn}" Content="{loc:T 'Минималистичный'}" Tag="minimal" Click="Mode_Click"/>
                                     </StackPanel>
                                     <TextBlock Text="{loc:T 'Минималистичный: маленький кружок, при наведении открывается остров.'}" Foreground="{StaticResource SubBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,12" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="{loc:T 'РЕЖИМ ДЛЯ ИГР'}" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{loc:T 'Прятать остров в играх и полноэкранных окнах'}" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        <Button x:Name="GameModeButton" Grid.Column="1" Style="{StaticResource PresetBtn}" MinWidth="56" Margin="8,0,0,0" Click="GameMode_Click"/>
+                                    </Grid>
+                                    <TextBlock Text="{loc:T 'Уведомления, напоминания и таймер покажутся, когда полноэкранное окно закроется или свернётся.'}" Foreground="{StaticResource SubBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Border>
 

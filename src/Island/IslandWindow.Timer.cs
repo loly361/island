@@ -55,9 +55,8 @@ public partial class IslandWindow
 
     private void OnTimerFinished()
     {
-        SystemSounds.Asterisk.Play();
         var minutes = (int)Math.Round(_timer.Total.TotalMinutes);
-        ShowAlert(Loc.T("Таймер завершён"), Loc.F("{0} мин прошло", minutes), 10000, "clock", null, (Brush)FindResource("TimerBrush"));
+        ShowAlert(Loc.T("Таймер завершён"), Loc.F("{0} мин прошло", minutes), 10000, "clock", null, (Brush)FindResource("TimerBrush"), SystemSounds.Asterisk);
         if (_tab == IxNotes) RenderTimer();
     }
 
@@ -217,9 +216,8 @@ public partial class IslandWindow
         var due = _reminders.TakeDue(DateTime.Now);
         if (due.Count == 0) return;
 
-        SystemSounds.Exclamation.Play();
         var last = due[^1];
-        ShowAlert(Loc.T("Напоминание"), due.Count == 1 ? last.Text : Loc.F("{0} и ещё {1}", last.Text, due.Count - 1), 12000, "bell", null, (Brush)FindResource("TimerBrush"));
+        ShowAlert(Loc.T("Напоминание"), due.Count == 1 ? last.Text : Loc.F("{0} и ещё {1}", last.Text, due.Count - 1), 12000, "bell", null, (Brush)FindResource("TimerBrush"), SystemSounds.Exclamation);
         if (_state == State.Expanded && _tab == IxNotes) RenderReminders();
     }
 }

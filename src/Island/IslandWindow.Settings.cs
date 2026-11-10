@@ -68,7 +68,9 @@ public partial class IslandWindow
         RenderModeButtons();
         RenderLanguageButtons();
         RenderUpdateCard();
+        RenderGameModeButton();
         ApplyMode();
+        CheckGameMode();
     }
 
     private void RenderSettings()
@@ -84,6 +86,7 @@ public partial class IslandWindow
         RenderModeButtons();
         RenderLanguageButtons();
         RenderUpdateCard();
+        RenderGameModeButton();
     }
 
     /// <summary>Highlights the saved language; the running window keeps the language it started with until a restart.</summary>

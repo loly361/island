@@ -1,45 +1,45 @@
-# Установщик Island
+# Island installer
 
-Нужен Inno Setup 6: `winget install -e --id JRSoftware.InnoSetup`.
+Requires Inno Setup 6: `winget install -e --id JRSoftware.InnoSetup`.
 
-Сборка из корня репозитория:
+Build from the repository root:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
-Скрипт делает `dotnet publish` в `installer/payload`, компилирует `installer/Island.iss`
-и кладёт в `installer/output` файлы `Island-Setup.exe` и `Island-Setup.exe.sha256`.
+The script runs `dotnet publish` into `installer/payload`, compiles `installer/Island.iss`
+and puts `Island-Setup.exe` and `Island-Setup.exe.sha256` into `installer/output`.
 
-Параметры:
-- `-Version 1.2.0` — версия (по умолчанию из `src/Island/Island.csproj`);
-- `-SkipPublish` — не публиковать, взять готовую папку;
-- `-PayloadDir <папка>` — откуда брать файлы программы. Без `-SkipPublish` папка очищается перед публикацией,
-  поэтому она должна лежать внутри `installer/`; иначе скрипт останавливается с ошибкой.
+Parameters:
+- `-Version 1.2.0`: the version (taken from `src/Island/Island.csproj` by default);
+- `-SkipPublish`: do not publish, use a ready-made folder;
+- `-PayloadDir <folder>`: where to take the program files from. Without `-SkipPublish` the folder is cleared
+  before publishing, so it must be inside `installer/`; otherwise the script stops with an error.
 
-## Что делает установщик
+## What the installer does
 
-- Ставит Island на пользователя, без прав администратора, в `%LOCALAPPDATA%\Programs\Island`.
-- Добавляет ярлык в меню «Пуск», по желанию — на рабочий стол.
-- Задача «Запускать вместе с Windows» (включена по умолчанию) пишет
-  `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Island` = `"<папка>\Island.exe"`,
-  так же, как пункт меню в трее.
-- Удаление убирает этот ключ, только если он указывает на эту копию.
-  Данные в `%APPDATA%\Island` не удаляются.
-- Нужен .NET 9 Desktop Runtime (x64); если его нет, установщик предложит открыть страницу загрузки.
+- Installs Island for the current user, without administrator rights, into `%LOCALAPPDATA%\Programs\Island`.
+- Adds a Start menu shortcut and, optionally, a desktop shortcut.
+- The "Start with Windows" task (on by default) writes
+  `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Island` = `"<folder>\Island.exe"`,
+  the same way the tray menu item does.
+- Uninstalling removes that key only if it points at this copy.
+  Data in `%APPDATA%\Island` is not deleted.
+- Requires the .NET 9 Desktop Runtime (x64); if it is missing, the installer offers to open the download page.
 
-Первая установка через `Island-Setup.exe` переносит программу в `%LOCALAPPDATA%\Programs\Island`
-(ярлык и автозапуск начинают указывать туда). Старую папку, из которой Island запускался раньше,
-после этого можно удалить: настройки и данные лежат отдельно, в `%APPDATA%\Island`.
+The first installation through `Island-Setup.exe` moves the program into `%LOCALAPPDATA%\Programs\Island`
+(the shortcut and autostart start pointing there). The old folder Island used to run from
+can be deleted after that: settings and data are stored separately, in `%APPDATA%\Island`.
 
-## Тихий режим (автообновление)
+## Silent mode (auto-update)
 
 ```
 Island-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
 ```
 
-Установщик закрывает работающий Island из папки установки, ставит файлы и запускает новый Island.
-`/NOLAUNCH` отключает запуск, `/NOICONS` — ярлыки. В тихом режиме автозапуск не трогается:
-если пользователь выключил его в трее, обновление его не включит.
+The installer closes a running Island from the install folder, installs the files and starts the new Island.
+`/NOLAUNCH` turns the launch off and `/NOICONS` turns the shortcuts off. Silent mode leaves autostart alone:
+if the user switched it off in the tray, an update will not switch it on.
 
-AppId `{AC7DE9DF-D68E-4599-85A6-968CC9FA163C}` менять нельзя.
+Do not change the AppId `{AC7DE9DF-D68E-4599-85A6-968CC9FA163C}`.

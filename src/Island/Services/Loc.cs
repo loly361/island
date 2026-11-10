@@ -331,6 +331,28 @@ public static class Loc
         ["Не удалось запустить установщик"] = "Impossible de lancer le programme d'installation",
         ["Доступна новая версия Island"] = "Une nouvelle version d'Island est disponible",
         ["Версия {0}. Обновить можно в настройках."] = "Version {0}. Mise à jour depuis les paramètres.",
+
+        // Screen recording and game mode
+        ["Запись экрана"] = "Enregistrer l'écran",
+        ["Видео"] = "Vidéos",
+        ["Что записать?"] = "Que filmer ?",
+        ["Без звука, до 30 минут"] = "Sans son, jusqu'à 30 minutes",
+        ["Отмена"] = "Annuler",
+        ["Остановить"] = "Arrêter",
+        ["Остановить запись"] = "Arrêter l'enregistrement",
+        ["Не удалось начать запись"] = "Impossible de démarrer l'enregistrement",
+        ["Не удалось сохранить запись"] = "Impossible d'enregistrer la vidéo",
+        ["Запись сохранена"] = "Enregistrement sauvegardé",
+        ["{0} — нажмите, чтобы показать в папке"] = "{0} — cliquez pour l'afficher dans le dossier",
+        ["Не хватает места на диске"] = "Espace disque insuffisant",
+        ["Нет доступа к папке Видео"] = "Pas d'accès au dossier Vidéos",
+        ["Достигнут предел {0} мин"] = "Limite de {0} min atteinte",
+        ["Изменился экран"] = "L'écran a changé",
+        ["Не удалось снять экран"] = "Impossible de capturer l'écran",
+        ["Запись слишком короткая"] = "Enregistrement trop court",
+        ["РЕЖИМ ДЛЯ ИГР"] = "MODE JEU",
+        ["Прятать остров в играх и полноэкранных окнах"] = "Masquer l'île dans les jeux et les fenêtres plein écran",
+        ["Уведомления, напоминания и таймер покажутся, когда полноэкранное окно закроется или свернётся."] = "Les notifications, rappels et minuteur s'afficheront quand la fenêtre plein écran sera fermée ou réduite.",
     };
 
     private static readonly Dictionary<string, string> EnglishText = new(StringComparer.Ordinal)
@@ -578,6 +600,28 @@ public static class Loc
         ["Не удалось запустить установщик"] = "Couldn't start the installer",
         ["Доступна новая версия Island"] = "A new version of Island is available",
         ["Версия {0}. Обновить можно в настройках."] = "Version {0}. You can update it in Settings.",
+
+        // Screen recording and game mode
+        ["Запись экрана"] = "Record screen",
+        ["Видео"] = "Videos",
+        ["Что записать?"] = "What to record?",
+        ["Без звука, до 30 минут"] = "No sound, up to 30 minutes",
+        ["Отмена"] = "Cancel",
+        ["Остановить"] = "Stop",
+        ["Остановить запись"] = "Stop recording",
+        ["Не удалось начать запись"] = "Couldn't start recording",
+        ["Не удалось сохранить запись"] = "Couldn't save the recording",
+        ["Запись сохранена"] = "Recording saved",
+        ["{0} — нажмите, чтобы показать в папке"] = "{0} — click to show it in the folder",
+        ["Не хватает места на диске"] = "Not enough disk space",
+        ["Нет доступа к папке Видео"] = "No access to the Videos folder",
+        ["Достигнут предел {0} мин"] = "{0} min limit reached",
+        ["Изменился экран"] = "The display changed",
+        ["Не удалось снять экран"] = "Couldn't capture the screen",
+        ["Запись слишком короткая"] = "The recording is too short",
+        ["РЕЖИМ ДЛЯ ИГР"] = "GAME MODE",
+        ["Прятать остров в играх и полноэкранных окнах"] = "Hide the island in games and full-screen windows",
+        ["Уведомления, напоминания и таймер покажутся, когда полноэкранное окно закроется или свернётся."] = "Notifications, reminders and the timer show up once the full-screen window is closed or minimized.",
     };
 }
 

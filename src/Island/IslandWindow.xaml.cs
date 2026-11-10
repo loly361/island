@@ -56,7 +56,7 @@ public partial class IslandWindow : Window
     private const int HotkeyId = 0x1510;
     private static readonly TimeSpan TypingGrace = TimeSpan.FromSeconds(12);
     private const int IxHome = 0, IxClip = 1, IxInbox = 2, IxNotes = 3, IxWeather = 4, IxControl = 5, IxSearch = 6, IxSettings = 7;
-    private static readonly double[] TabHeights = { 345, 375, 375, 395, 395, 275, 395, 395 };
+    private static readonly double[] TabHeights = { 395, 375, 375, 395, 395, 275, 395, 395 };
 
     private readonly Settings _settings;
     private readonly ClipboardHistory _clips;
@@ -88,11 +88,13 @@ public partial class IslandWindow : Window
     private DateTime _alertUntil = DateTime.MinValue;
     private DateTime _suppressUntil = DateTime.MinValue;
     private DateTime _lastKeyUtc = DateTime.MinValue;
-    private (string Title, string Message, int Ms, string Glyph, string? Tag, Brush? Icon)? _pending;
-    private bool _timerChipShown, _coverShown;
+    private AlertRequest? _pending;
+    private AlertRequest? _currentAlert;
+    private Action? _alertAction;
+    private bool _timerChipShown, _coverShown, _recChipShown;
 
-    /// <summary>The collapsed pill grows to fit the timer ring and the album cover when they are shown.</summary>
-    private double CollapsedNow => CollapsedW + (_timerChipShown ? 80 : 0) + (_coverShown ? 26 : 0);
+    /// <summary>The collapsed pill grows to fit the timer ring, the album cover and the recording time when they are shown.</summary>
+    private double CollapsedNow => CollapsedW + (_timerChipShown ? 80 : 0) + (_coverShown ? 26 : 0) + (_recChipShown ? 68 : 0);
 
     private bool Minimal => string.Equals(_settings.Mode, Settings.ModeMinimal, StringComparison.OrdinalIgnoreCase);
 
@@ -129,6 +131,8 @@ public partial class IslandWindow : Window
         InitInbox();
         InitAccent();
         InitUpdates();
+        InitGameMode();
+        InitRecording();
         _noteTimer.Tick += (_, _) => { _noteTimer.Stop(); SaveCurrentNote(); };
         _searchTimer.Tick += async (_, _) => { _searchTimer.Stop(); await RunSearchAsync(SearchBox.Text); };
 
@@ -211,6 +215,7 @@ public partial class IslandWindow : Window
                 break;
             case Native.WM_DISPLAYCHANGE:
                 Dispatcher.BeginInvoke(new Action(PositionWindow));
+                OnDisplayChangedWhileRecording();
                 break;
             case WM_SETTINGCHANGE:
                 ScheduleAccentRefresh();
@@ -234,6 +239,8 @@ public partial class IslandWindow : Window
         _settingsWatcher?.Dispose();
         _volume.Dispose();
         StopUpdates();
+        _gameTimer.Stop();
+        FinishRecordingNow();
     }
 
     // ---------- state machine and animation ----------
@@ -242,6 +249,12 @@ public partial class IslandWindow : Window
     {
         var prev = _state;
         _state = next;
+        if (next != State.Alert)
+        {
+            _alertAction = null;
+            _currentAlert = null;
+        }
+
         if (prev != State.Expanded) _hoveredSinceExpand = false;
         _hoverSince = null;
 
@@ -418,29 +431,47 @@ public partial class IslandWindow : Window
         if (_state == State.Collapsed) return;
         var wasActive = IsActive && _state == State.Expanded;
         FlushNote();
+        RecordChoice.Visibility = Visibility.Collapsed;
+        ToolTiles.Visibility = Visibility.Visible;
         SetState(State.Collapsed);
         if (wasActive && _lastExternal != IntPtr.Zero) Native.SetForegroundWindow(_lastExternal);
 
         if (_pending is { } p)
         {
             _pending = null;
-            ShowAlert(p.Title, p.Message, p.Ms, p.Glyph, p.Tag, p.Icon);
+            ShowAlert(p);
         }
     }
 
-    public void ShowAlert(string title, string message, int ms = 2400, string glyph = "exclamationmark.triangle", string? tag = null, Brush? iconBrush = null)
+    /// <summary>
+    /// Shows a banner on the island. <paramref name="sound"/> plays with it; <paramref name="onClick"/> makes the banner
+    /// clickable (hovering it then keeps it instead of opening the panel). In game mode the banner waits for the game to close.
+    /// </summary>
+    public void ShowAlert(string title, string message, int ms = 2400, string glyph = "exclamationmark.triangle", string? tag = null,
+        Brush? iconBrush = null, System.Media.SystemSound? sound = null, Action? onClick = null) =>
+        ShowAlert(new AlertRequest(title, message, ms, glyph, tag, iconBrush, sound, onClick));
+
+    private void ShowAlert(AlertRequest alert)
     {
+        if (_gameHidden)
+        {
+            DeferAlert(alert);
+            return;
+        }
+
+        alert.Sound?.Play();
+        alert = alert with { Sound = null };
         if (_state == State.Expanded)
         {
-            _pending = (title, message, ms, glyph, tag, iconBrush);
+            _pending = alert;
             return;
         }
 
         AlertTitle.Inlines.Clear();
-        AlertTitle.Inlines.Add(new System.Windows.Documents.Run(title));
-        if (!string.IsNullOrWhiteSpace(tag))
+        AlertTitle.Inlines.Add(new System.Windows.Documents.Run(alert.Title));
+        if (!string.IsNullOrWhiteSpace(alert.Tag))
         {
-            AlertTitle.Inlines.Add(new System.Windows.Documents.Run("  " + tag)
+            AlertTitle.Inlines.Add(new System.Windows.Documents.Run("  " + alert.Tag)
             {
                 Foreground = (Brush)FindResource("SubBrush"),
                 FontWeight = FontWeights.Normal,
@@ -448,19 +479,31 @@ public partial class IslandWindow : Window
             });
         }
 
-        AlertMessage.Text = message;
-        AlertMessage.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
-        AlertGlyph.Kind = glyph;
-        AlertIcon.Background = iconBrush ?? (Brush)FindResource("AccentBrush");
-        _alertUntil = DateTime.UtcNow.AddMilliseconds(ms);
+        AlertMessage.Text = alert.Message;
+        AlertMessage.Visibility = string.IsNullOrEmpty(alert.Message) ? Visibility.Collapsed : Visibility.Visible;
+        AlertGlyph.Kind = alert.Glyph;
+        AlertIcon.Background = alert.Icon ?? (Brush)FindResource("AccentBrush");
+        _alertUntil = DateTime.UtcNow.AddMilliseconds(alert.Ms);
+        _currentAlert = alert;
+        _alertAction = alert.OnClick;
+        AlertView.Cursor = alert.OnClick is null ? null : Cursors.Hand;
         SetState(State.Alert);
+    }
+
+    private void Alert_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_state != State.Alert || _alertAction is not { } action) return;
+        _alertAction = null;
+        _currentAlert = null;
+        SetState(State.Collapsed);
+        action();
     }
 
     // ---------- hover tracking ----------
 
     private void OnHoverTick(object? sender, EventArgs e)
     {
-        TrackForeground();
+        OnForegroundSeen(TrackForeground());
         if (_toolBusy || !IsVisible || !Native.GetCursorPos(out var p)) return;
 
         var now = DateTime.UtcNow;
@@ -477,6 +520,14 @@ public partial class IslandWindow : Window
 
         if (_state != State.Expanded)
         {
+            // A clickable banner stays while the cursor is on it, so it can be clicked instead of opening the panel.
+            if (_state == State.Alert && _alertAction is not null && inside)
+            {
+                _hoverSince = null;
+                if (_alertUntil < now.AddSeconds(1.5)) _alertUntil = now.AddSeconds(1.5);
+                return;
+            }
+
             if (inside || trigger)
             {
                 _hoverSince ??= now;
@@ -487,7 +538,15 @@ public partial class IslandWindow : Window
                 _hoverSince = null;
             }
 
-            if (_state == State.Alert && now > _alertUntil) SetState(State.Collapsed);
+            if (_state == State.Alert && now > _alertUntil)
+            {
+                _alertAction = null;
+                _currentAlert = null;
+                SetState(State.Collapsed);
+            }
+
+            // Banners held back during a game come out one after another.
+            if (_state == State.Collapsed && _hoverSince is null && _deferred.Count > 0) ShowNextDeferred();
             return;
         }
 
@@ -507,12 +566,13 @@ public partial class IslandWindow : Window
         || Mouse.LeftButton == MouseButtonState.Pressed
         || (!_hoveredSinceExpand && IsActive && Keyboard.FocusedElement is TextBoxBase && DateTime.UtcNow - _lastKeyUtc < TypingGrace);
 
-    private void TrackForeground()
+    private IntPtr TrackForeground()
     {
         var fg = Native.GetForegroundWindow();
-        if (fg == IntPtr.Zero || fg == _hwnd) return;
+        if (fg == IntPtr.Zero || fg == _hwnd) return fg;
         Native.GetWindowThreadProcessId(fg, out var pid);
         if (pid != _pid) _lastExternal = fg;
+        return fg;
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -605,13 +665,22 @@ public partial class IslandWindow : Window
         }), DispatcherPriority.Input);
     }
 
-    public void OpenHome() => Expand(0);
+    public void OpenHome()
+    {
+        RevealOverFullscreen();
+        Expand(0);
+    }
 
-    public void OpenSearch() => HotkeyPressed();
+    public void OpenSearch()
+    {
+        RevealOverFullscreen();
+        HotkeyPressed();
+    }
 
     private void HotkeyPressed()
     {
-        if (_toolBusy) return;
+        // In a game Alt+Space belongs to the game; the tray menu still opens the island on purpose.
+        if (_toolBusy || _gameHidden) return;
         _lastKeyUtc = DateTime.UtcNow;
         if (_state == State.Expanded && _tab == IxSearch && IsActive)
         {
@@ -754,6 +823,11 @@ public partial class IslandWindow : Window
                     break;
                 case "folder":
                     SystemUtil.Launch(ScreenTools.ScreenshotsFolder());
+                    Collapse();
+                    break;
+                case "videos":
+                    Directory.CreateDirectory(RecordingRules.Folder());
+                    SystemUtil.Launch(RecordingRules.Folder());
                     Collapse();
                     break;
                 default:

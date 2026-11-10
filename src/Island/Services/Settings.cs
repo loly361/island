@@ -33,6 +33,8 @@ public sealed class Settings
     public bool AutoUpdateCheck { get; set; } = true;
     /// <summary>The release version the user has already been told about; no further pop-up until a newer one appears.</summary>
     public string? DismissedUpdateVersion { get; set; }
+    /// <summary>Hide the island while a game or another full-screen window is in front; alerts wait until it closes.</summary>
+    public bool GameMode { get; set; } = true;
 
     public const string ModeStandard = "standard";
     public const string ModeMinimal = "minimal";
@@ -53,6 +55,7 @@ public sealed class Settings
         Language = other.Language;
         AutoUpdateCheck = other.AutoUpdateCheck;
         DismissedUpdateVersion = other.DismissedUpdateVersion;
+        GameMode = other.GameMode;
         Shortcuts = other.Shortcuts;
     }
     public List<AppShortcut> Shortcuts { get; set; } = new()

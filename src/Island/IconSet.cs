@@ -205,6 +205,11 @@ public static class IconSet
     {
         Add("play.fill").SF(RoundPoly(1.6, (7, 4.75), (19.75, 12), (7, 19.25)));
         Add("pause.fill").SF(RoundRect(6.5, 5, 3.5, 14, 1)).SF(RoundRect(14, 5, 3.5, 14, 1));
+        Add("stop.fill").SF(RoundRect(6, 6, 12, 12, 2.25));
+        Add("record.circle").S(Circle(12, 12, 9)).F(Circle(12, 12, 4.25));
+        Add("video")
+            .S(RoundRect(2.75, 6.25, 12.75, 11.5, 2.75))
+            .S(RoundPoly(0.9, (15.5, 10.5), (21.25, 7.25), (21.25, 16.75), (15.5, 13.5)));
         Add("forward.fill")
             .SF(RoundPoly(1, (3.5, 6.75), (11.75, 12), (3.5, 17.25)))
             .SF(RoundPoly(1, (12.25, 6.75), (20.5, 12), (12.25, 17.25)));
