@@ -57,7 +57,7 @@ public partial class IslandWindow
     {
         SystemSounds.Asterisk.Play();
         var minutes = (int)Math.Round(_timer.Total.TotalMinutes);
-        ShowAlert(Loc.T("Таймер завершён"), Loc.F("{0} мин прошло", minutes), 10000, "\uE823", null, (Brush)FindResource("TimerBrush"));
+        ShowAlert(Loc.T("Таймер завершён"), Loc.F("{0} мин прошло", minutes), 10000, "clock", null, (Brush)FindResource("TimerBrush"));
         if (_tab == IxNotes) RenderTimer();
     }
 
@@ -86,7 +86,7 @@ public partial class IslandWindow
     {
         TimerText.Text = ClockText(_timer.Remaining);
         DrawRing(_timer.Fraction);
-        TimerStartGlyph.Text = _timer.Running ? "" : "";
+        TimerStartGlyph.Kind = _timer.Running ? "pause.fill" : "play.fill";
         TimerStartLabel.Text = Loc.T(_timer.Running ? "Пауза" : _timer.Paused ? "Продолжить" : "Старт");
         TimerSecondaryLabel.Text = Loc.T(_timer.Running || _timer.Paused ? "Сбросить" : "Своё время");
         UpdateTimerChip();
@@ -219,7 +219,7 @@ public partial class IslandWindow
 
         SystemSounds.Exclamation.Play();
         var last = due[^1];
-        ShowAlert(Loc.T("Напоминание"), due.Count == 1 ? last.Text : Loc.F("{0} и ещё {1}", last.Text, due.Count - 1), 12000, "", null, (Brush)FindResource("TimerBrush"));
+        ShowAlert(Loc.T("Напоминание"), due.Count == 1 ? last.Text : Loc.F("{0} и ещё {1}", last.Text, due.Count - 1), 12000, "bell", null, (Brush)FindResource("TimerBrush"));
         if (_state == State.Expanded && _tab == IxNotes) RenderReminders();
     }
 }

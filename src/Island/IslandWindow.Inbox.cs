@@ -62,7 +62,7 @@ public partial class IslandWindow
     private void OnInboxArrived(InboxItem item)
     {
         if (!_settings.NotificationsEnabled) return;
-        ShowAlert(item.Title, item.Body, 6000, "", item.App, InboxIconBrush);
+        ShowAlert(item.Title, item.Body, 6000, "bell", item.App, InboxIconBrush);
     }
 
     private void RenderInbox()

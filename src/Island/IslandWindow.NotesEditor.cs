@@ -190,7 +190,7 @@ public partial class IslandWindow
     private static void FlashDone(Button button)
     {
         var original = button.Content;
-        button.Content = "";
+        button.Content = "checkmark";
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(900) };
         timer.Tick += (_, _) =>
         {

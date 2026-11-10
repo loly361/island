@@ -25,7 +25,7 @@ public sealed class ClipRow
     public required ClipEntry Entry { get; init; }
     public string Preview { get; init; } = "";
     public string Meta { get; init; } = "";
-    public string PinGlyph { get; init; } = "";
+    public string PinGlyph { get; init; } = "pin";
     public Brush PinBrush { get; init; } = Brushes.Gray;
     public bool Pinned { get; init; }
 }
@@ -428,7 +428,7 @@ public partial class IslandWindow : Window
         }
     }
 
-    public void ShowAlert(string title, string message, int ms = 2400, string glyph = "\uE7BA", string? tag = null, Brush? iconBrush = null)
+    public void ShowAlert(string title, string message, int ms = 2400, string glyph = "exclamationmark.triangle", string? tag = null, Brush? iconBrush = null)
     {
         if (_state == State.Expanded)
         {
@@ -450,7 +450,7 @@ public partial class IslandWindow : Window
 
         AlertMessage.Text = message;
         AlertMessage.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
-        AlertGlyph.Text = glyph;
+        AlertGlyph.Kind = glyph;
         AlertIcon.Background = iconBrush ?? (Brush)FindResource("AccentBrush");
         _alertUntil = DateTime.UtcNow.AddMilliseconds(ms);
         SetState(State.Alert);
@@ -625,7 +625,7 @@ public partial class IslandWindow : Window
     private void Pin_Click(object sender, RoutedEventArgs e)
     {
         _pinned = !_pinned;
-        PinButton.Content = _pinned ? "" : "";
+        PinButton.Content = _pinned ? "pin.fill" : "pin";
         PinButton.Foreground = _pinned ? (Brush)FindResource("AccentBrush") : (Brush)FindResource("SubBrush");
     }
 
@@ -648,7 +648,7 @@ public partial class IslandWindow : Window
             ArtFallback.Visibility = Visibility.Collapsed;
         }
 
-        PlayButton.Content = s.IsPlaying ? "" : "";
+        PlayButton.Content = s.IsPlaying ? "pause.fill" : "play.fill";
         PrevButton.IsEnabled = s.HasSession && s.CanPrev;
         NextButton.IsEnabled = s.HasSession && s.CanNext;
         PlayButton.IsEnabled = s.HasSession;
@@ -702,7 +702,7 @@ public partial class IslandWindow : Window
         var level = _volume.Level;
         VolSlider.Value = level;
         VolText.Text = level.ToString();
-        VolGlyph.Text = level == 0 ? "" : "";
+        VolGlyph.Kind = level == 0 ? "speaker.xmark" : "speaker.wave.2";
         VolDevice.Text = _volume.DeviceName;
         VolSlider.IsEnabled = _volume.Available;
         _syncingVolume = false;
@@ -714,7 +714,7 @@ public partial class IslandWindow : Window
         var level = (int)Math.Round(e.NewValue);
         _volume.Level = level;
         VolText.Text = level.ToString();
-        VolGlyph.Text = level == 0 ? "" : "";
+        VolGlyph.Kind = level == 0 ? "speaker.xmark" : "speaker.wave.2";
     }
 
     private void BuildShortcuts()
@@ -911,7 +911,7 @@ public partial class IslandWindow : Window
             Preview = Preview(e.Text),
             Meta = $"{Loc.T(e.Source)} · {TimeLabels.Ago(e.At, now)}",
             Pinned = e.Pinned,
-            PinGlyph = e.Pinned ? "" : "",
+            PinGlyph = e.Pinned ? "pin.fill" : "pin",
             PinBrush = e.Pinned ? (Brush)FindResource("AccentBrush") : (Brush)FindResource("SubBrush"),
         }).ToList();
 
@@ -1123,10 +1123,10 @@ public partial class IslandWindow : Window
 
     private static string GlyphFor(ResultKind kind) => kind switch
     {
-        ResultKind.App => "",
-        ResultKind.File => "",
-        ResultKind.Ask => "",
-        _ => "",
+        ResultKind.App => "square.grid.2x2",
+        ResultKind.File => "doc",
+        ResultKind.Ask => "bubble.left",
+        _ => "globe",
     };
 
     private void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -1167,7 +1167,7 @@ public partial class IslandWindow : Window
     private void StartNotifyServer()
     {
         _notify.Notified += (title, message) =>
-            Dispatcher.BeginInvoke(new Action(() => ShowAlert(title, message, 10000, "")));
+            Dispatcher.BeginInvoke(new Action(() => ShowAlert(title, message, 10000, "bubble.left")));
         _notify.Start(_settings.NotifyPort);
     }
 }

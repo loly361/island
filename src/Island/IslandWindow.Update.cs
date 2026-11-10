@@ -140,7 +140,7 @@ public partial class IslandWindow
 
         _settings.DismissedUpdateVersion = version;
         JsonStore.Save(AppPaths.File("settings.json"), _settings);
-        ShowAlert(Loc.T("Доступна новая версия Island"), Loc.F("Версия {0}. Обновить можно в настройках.", version), 6000, "");
+        ShowAlert(Loc.T("Доступна новая версия Island"), Loc.F("Версия {0}. Обновить можно в настройках.", version), 6000, "arrow.down.circle");
     }
 
     private async void UpdateInstall_Click(object sender, RoutedEventArgs e)

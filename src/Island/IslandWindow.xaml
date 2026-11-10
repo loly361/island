@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:Island.Services"
+        xmlns:local="clr-namespace:Island"
         Title="Island" Width="660" Height="450"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize" ShowActivated="False"
@@ -18,12 +19,13 @@
         <SolidColorBrush x:Key="SubBrush" Color="#99FFFFFF"/>
         <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF"/>
         <SolidColorBrush x:Key="TimerBrush" Color="#FF9F0A"/>
-        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+        <!-- Icon buttons take an icon name as content (e.g. Content="trash"); the selector draws it with local:Icon. -->
+        <local:IconContentSelector x:Key="IconContent"/>
         <!-- Concentric radii: the panel is 34, cards inset by 14 get 22, rows and tiles inside cards get 14. -->
         <CornerRadius x:Key="CardRadius">22</CornerRadius>
         <CornerRadius x:Key="RowRadius">14</CornerRadius>
 
-        <!-- 3D icons: each glyph is lit from above (light top, darker bottom) and casts a soft shadow underneath. -->
+        <!-- 3D icons: each icon is lit from above (light top, darker bottom) and casts a soft shadow underneath. -->
         <LinearGradientBrush x:Key="IconFill" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#FFFFFF" Offset="0.35"/>
             <GradientStop Color="#6F82A0" Offset="1"/>
@@ -49,18 +51,16 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
-        <!-- Shown over an empty list: a large faint glyph and one line of text. -->
-        <Style x:Key="EmptyGlyph" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
-            <Setter Property="FontSize" Value="30"/>
+        <!-- Shown over an empty list: a large faint icon and one line of text. -->
+        <Style x:Key="EmptyGlyph" TargetType="local:Icon">
+            <Setter Property="Size" Value="30"/>
             <Setter Property="Foreground" Value="{StaticResource IconFaint}"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
         </Style>
 
-        <Style x:Key="Glyph" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
-            <Setter Property="FontSize" Value="16"/>
+        <Style x:Key="Glyph" TargetType="local:Icon">
+            <Setter Property="Size" Value="16"/>
             <Setter Property="Foreground" Value="{StaticResource IconFill}"/>
             <Setter Property="Effect" Value="{StaticResource IconShadow}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -73,7 +73,7 @@
             <Setter Property="Effect" Value="{StaticResource IconShadow}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Focusable" Value="False"/>
-            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+            <Setter Property="ContentTemplateSelector" Value="{StaticResource IconContent}"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -115,7 +115,7 @@
             <Setter Property="Effect" Value="{StaticResource IconShadow}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Focusable" Value="False"/>
-            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+            <Setter Property="ContentTemplateSelector" Value="{StaticResource IconContent}"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -224,7 +224,7 @@
             <Setter Property="Margin" Value="6,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Focusable" Value="False"/>
-            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+            <Setter Property="ContentTemplateSelector" Value="{StaticResource IconContent}"/>
             <Setter Property="FontSize" Value="17"/>
             <Setter Property="Foreground" Value="#0B0B0D"/>
             <Setter Property="Template">
@@ -339,7 +339,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Style="{StaticResource Glyph}" Text="&#xE721;" FontSize="14" Foreground="{StaticResource SubBrush}" Margin="0,0,10,0"/>
+                                <local:Icon Style="{StaticResource Glyph}" Kind="magnifyingglass" Size="14" Foreground="{StaticResource SubBrush}" Margin="0,0,10,0"/>
                                 <ScrollViewer x:Name="PART_ContentHost" Grid.Column="1" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="ph" Grid.Column="1" Text="{TemplateBinding Tag}" Foreground="{StaticResource SubBrush}"
                                            IsHitTestVisible="False" VerticalAlignment="Center" Visibility="Collapsed"/>
@@ -538,7 +538,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="10" Background="{StaticResource Surface2}">
-                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE8A5;" FontSize="14" Foreground="{StaticResource SubBrush}" HorizontalAlignment="Center"/>
+                        <local:Icon Style="{StaticResource Glyph}" Kind="doc" Size="14" Foreground="{StaticResource SubBrush}" HorizontalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Preview}" Foreground="{StaticResource TextBrush}" FontSize="13" TextTrimming="CharacterEllipsis"/>
@@ -560,7 +560,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="&#xE74D;" Width="28" Height="28" Click="ClipDelete_Click">
+                        <Button Content="trash" Width="28" Height="28" Click="ClipDelete_Click">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource IconBtn}">
                                     <Setter Property="Opacity" Value="0"/>
@@ -585,7 +585,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Style="{StaticResource Glyph}" Text="{Binding Glyph}" FontSize="15" Foreground="{StaticResource SubBrush}" Width="22"/>
+                    <local:Icon Style="{StaticResource Glyph}" Kind="{Binding Glyph}" Size="15" Foreground="{StaticResource SubBrush}" Width="22"/>
                     <TextBlock Grid.Column="1" Text="{Binding Title}" Foreground="{StaticResource TextBrush}" FontSize="13" Margin="8,0" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="2" Text="{Binding Subtitle}" Foreground="{StaticResource SubBrush}" FontSize="11" MaxWidth="230" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                 </Grid>
@@ -608,7 +608,7 @@
                     <TextBlock Text="{Binding Text}" Foreground="{StaticResource TextBrush}" FontSize="12" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding DueLabel}" Foreground="{StaticResource TimerBrush}" FontSize="10"/>
                 </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource IconBtn}" Content="&#xE711;" Width="24" Height="24" FontSize="10" Click="ReminderDelete_Click"/>
+                <Button Grid.Column="1" Style="{StaticResource IconBtn}" Content="xmark" Width="24" Height="24" FontSize="10" Click="ReminderDelete_Click"/>
             </Grid>
         </DataTemplate>
 
@@ -620,7 +620,7 @@
                 </Grid.ColumnDefinitions>
                 <Grid Width="36" Height="36" VerticalAlignment="Top">
                     <Border CornerRadius="11" Background="{DynamicResource AccentBrush}" Opacity="0.22"/>
-                    <TextBlock Style="{StaticResource Glyph}" Text="&#xEA8F;" FontSize="14" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"/>
+                    <local:Icon Style="{StaticResource Glyph}" Kind="bell" Size="14" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"/>
                 </Grid>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                     <TextBlock Text="{Binding Title}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -647,7 +647,7 @@
                 <ContentControl x:Name="WeatherIconHost" Width="17" Height="17" Margin="0,0,7,0" VerticalAlignment="Center" Focusable="False"/>
                 <TextBlock x:Name="TimeText" Foreground="{StaticResource TextBrush}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 <TextBlock x:Name="TempText" Foreground="{StaticResource SubBrush}" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                <TextBlock x:Name="PlayingDot" Style="{StaticResource Glyph}" Text="&#xE8D6;" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="8,0,0,0" Visibility="Collapsed"/>
+                <local:Icon x:Name="PlayingDot" Style="{StaticResource Glyph}" Kind="music.note" Size="12" Foreground="{DynamicResource AccentBrush}" Margin="8,0,0,0" Visibility="Collapsed"/>
                 <Border x:Name="CoverChip" Width="18" Height="18" CornerRadius="5" Margin="8,0,0,0" VerticalAlignment="Center" Background="{StaticResource Surface2}" ClipToBounds="True" Visibility="Collapsed"/>
                 <StackPanel x:Name="TimerChip" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed">
                     <Grid Width="14" Height="14" Margin="0,0,5,0" VerticalAlignment="Center">
@@ -665,7 +665,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="AlertIcon" Width="34" Height="34" CornerRadius="10" Background="{DynamicResource AccentBrush}" VerticalAlignment="Center">
-                    <TextBlock x:Name="AlertGlyph" Style="{StaticResource Glyph}" Text="&#xE7BA;" Foreground="White" HorizontalAlignment="Center"/>
+                    <local:Icon x:Name="AlertGlyph" Style="{StaticResource Glyph}" Kind="exclamationmark.triangle" Foreground="White" HorizontalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="AlertTitle" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -687,17 +687,17 @@
                         <Border.RenderTransform><TranslateTransform x:Name="TabIndicatorShift"/></Border.RenderTransform>
                     </Border>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                        <RadioButton x:Name="TabHome" Style="{StaticResource TabBtn}" Content="&#xE80F;" Tag="0" ToolTip="{loc:T 'Главная'}" IsChecked="True" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabClip" Style="{StaticResource TabBtn}" Content="&#xE77F;" Tag="1" ToolTip="{loc:T 'Буфер обмена'}" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabInbox" Style="{StaticResource TabBtn}" Content="&#xEA8F;" Tag="2" ToolTip="{loc:T 'Уведомления'}" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabNotes" Style="{StaticResource TabBtn}" Content="&#xE70F;" Tag="3" ToolTip="{loc:T 'Заметки, таймер и напоминания'}" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabWeather" Style="{StaticResource TabBtn}" Content="&#xE706;" Tag="4" ToolTip="{loc:T 'Погода'}" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabControl" Style="{StaticResource TabBtn}" Content="&#xE9E9;" Tag="5" ToolTip="{loc:T 'Управление'}" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabSearch" Style="{StaticResource TabBtn}" Content="&#xE721;" Tag="6" ToolTip="{loc:T 'Поиск'}" Checked="Tab_Checked"/>
-                        <RadioButton x:Name="TabSettings" Style="{StaticResource TabBtn}" Content="&#xE713;" Tag="7" ToolTip="{loc:T 'Настройки'}" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabHome" Style="{StaticResource TabBtn}" Content="house" Tag="0" ToolTip="{loc:T 'Главная'}" IsChecked="True" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabClip" Style="{StaticResource TabBtn}" Content="clipboard" Tag="1" ToolTip="{loc:T 'Буфер обмена'}" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabInbox" Style="{StaticResource TabBtn}" Content="bell" Tag="2" ToolTip="{loc:T 'Уведомления'}" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabNotes" Style="{StaticResource TabBtn}" Content="square.and.pencil" Tag="3" ToolTip="{loc:T 'Заметки, таймер и напоминания'}" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabWeather" Style="{StaticResource TabBtn}" Content="sun.max" Tag="4" ToolTip="{loc:T 'Погода'}" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabControl" Style="{StaticResource TabBtn}" Content="slider.horizontal.2" Tag="5" ToolTip="{loc:T 'Управление'}" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabSearch" Style="{StaticResource TabBtn}" Content="magnifyingglass" Tag="6" ToolTip="{loc:T 'Поиск'}" Checked="Tab_Checked"/>
+                        <RadioButton x:Name="TabSettings" Style="{StaticResource TabBtn}" Content="gearshape" Tag="7" ToolTip="{loc:T 'Настройки'}" Checked="Tab_Checked"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button x:Name="PinButton" Style="{StaticResource IconBtn}" Content="&#xE718;" ToolTip="{loc:T 'Закрепить открытым'}" Click="Pin_Click"/>
+                        <Button x:Name="PinButton" Style="{StaticResource IconBtn}" Content="pin" ToolTip="{loc:T 'Закрепить открытым'}" Click="Pin_Click"/>
                     </StackPanel>
                 </Grid>
 
@@ -727,7 +727,7 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <Border x:Name="ArtBorder" Width="68" Height="68" CornerRadius="16" Background="{StaticResource Surface2}">
-                                            <TextBlock x:Name="ArtFallback" Style="{StaticResource Glyph}" Text="&#xE8D6;" FontSize="24" Foreground="{StaticResource SubBrush}" HorizontalAlignment="Center"/>
+                                            <local:Icon x:Name="ArtFallback" Style="{StaticResource Glyph}" Kind="music.note" Size="24" Foreground="{StaticResource SubBrush}" HorizontalAlignment="Center"/>
                                         </Border>
                                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:T 'МУЗЫКА'}" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold"/>
@@ -749,30 +749,30 @@
                                         <TextBlock x:Name="DurText" Grid.Column="2" Foreground="{StaticResource SubBrush}" FontSize="10" VerticalAlignment="Center" Width="32" TextAlignment="Right"/>
                                     </Grid>
                                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Button x:Name="PrevButton" Style="{StaticResource TransportBtn}" Content="&#xE892;" Click="Prev_Click"/>
-                                        <Button x:Name="PlayButton" Style="{StaticResource PlayBtn}" Content="&#xE768;" Click="Play_Click"/>
-                                        <Button x:Name="NextButton" Style="{StaticResource TransportBtn}" Content="&#xE893;" Click="Next_Click"/>
+                                        <Button x:Name="PrevButton" Style="{StaticResource TransportBtn}" Content="backward.fill" Click="Prev_Click"/>
+                                        <Button x:Name="PlayButton" Style="{StaticResource PlayBtn}" Content="play.fill" Click="Play_Click"/>
+                                        <Button x:Name="NextButton" Style="{StaticResource TransportBtn}" Content="forward.fill" Click="Next_Click"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
                             <UniformGrid Grid.Column="1" Columns="3" Rows="2" Margin="6,0,0,0">
                                 <Button Style="{StaticResource Tile}" Tag="area" Click="Action_Click">
-                                    <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE7A8;" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Область'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                    <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="crop" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Область'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource Tile}" Tag="full" Click="Action_Click">
-                                    <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE740;" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Весь экран'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                    <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="arrows.expand" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Весь экран'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource Tile}" Tag="ocr" Click="Action_Click">
-                                    <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE8D2;" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Текст с экрана'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                    <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="text.viewfinder" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Текст с экрана'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource Tile}" Tag="picker" Click="Action_Click">
-                                    <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE790;" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Пипетка'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                    <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="eyedropper" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Пипетка'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource Tile}" Tag="plain" Click="Action_Click">
-                                    <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE8E9;" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Чистый текст'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                    <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="textformat" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Чистый текст'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource Tile}" Tag="folder" Click="Action_Click">
-                                    <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE8B7;" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Скриншоты'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
+                                    <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="folder" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Скриншоты'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                             </UniformGrid>
                         </Grid>
@@ -784,7 +784,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="VolGlyph" Style="{StaticResource Glyph}" Text="&#xE767;" Foreground="{StaticResource SubBrush}" Margin="0,0,10,0"/>
+                            <local:Icon x:Name="VolGlyph" Style="{StaticResource Glyph}" Kind="speaker.wave.2" Foreground="{StaticResource SubBrush}" Margin="0,0,10,0"/>
                             <Slider x:Name="VolSlider" Grid.Column="1" Style="{StaticResource VolSlider}" ValueChanged="VolSlider_ValueChanged"/>
                             <TextBlock x:Name="VolText" Grid.Column="2" Foreground="{StaticResource SubBrush}" FontSize="12" Width="30" TextAlignment="Right" VerticalAlignment="Center"/>
                             <TextBlock x:Name="VolDevice" Grid.Column="3" Foreground="{StaticResource SubBrush}" FontSize="11" MaxWidth="150" TextTrimming="CharacterEllipsis" Margin="10,0,0,0" VerticalAlignment="Center"/>
@@ -811,11 +811,11 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="ClipSearch" Style="{StaticResource InputBox}" Tag="{loc:T 'Поиск по буферу'}" TextChanged="ClipSearch_TextChanged"/>
-                            <Button Grid.Column="1" Style="{StaticResource IconBtn}" Content="&#xE74D;" Width="40" Height="40" Margin="6,0,0,0" ToolTip="{loc:T 'Очистить (закреплённые остаются)'}" Click="ClipClear_Click"/>
+                            <Button Grid.Column="1" Style="{StaticResource IconBtn}" Content="trash" Width="40" Height="40" Margin="6,0,0,0" ToolTip="{loc:T 'Очистить (закреплённые остаются)'}" Click="ClipClear_Click"/>
                         </Grid>
                         <ListBox x:Name="ClipList" Grid.Row="1" Style="{StaticResource CardList}" Margin="0,10,0,0" ItemTemplate="{StaticResource ClipRowTemplate}"/>
                         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding Visibility, ElementName=ClipEmpty}">
-                            <TextBlock Style="{StaticResource EmptyGlyph}" Text="&#xE77F;"/>
+                            <local:Icon Style="{StaticResource EmptyGlyph}" Kind="clipboard"/>
                             <TextBlock x:Name="ClipEmpty" Text="{loc:T 'Здесь появится всё, что вы копируете'}" Foreground="{StaticResource SubBrush}" FontSize="12" HorizontalAlignment="Center" Visibility="Collapsed"/>
                         </StackPanel>
                         <TextBlock Grid.Row="2" Text="{loc:T 'Клик — вставить · Shift+клик — только копировать'}" Foreground="{StaticResource SubBrush}" FontSize="11" Margin="2,8,0,0"/>
@@ -829,11 +829,11 @@
                         </Grid.RowDefinitions>
                         <Grid Margin="2,0,0,6">
                             <TextBlock Text="{loc:T 'Уведомления Windows'}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            <Button Style="{StaticResource IconBtn}" Content="&#xE74D;" HorizontalAlignment="Right" Width="30" Height="28" ToolTip="{loc:T 'Очистить список (в Windows уведомления остаются)'}" Click="InboxClear_Click"/>
+                            <Button Style="{StaticResource IconBtn}" Content="trash" HorizontalAlignment="Right" Width="30" Height="28" ToolTip="{loc:T 'Очистить список (в Windows уведомления остаются)'}" Click="InboxClear_Click"/>
                         </Grid>
                         <ListBox x:Name="InboxList" Grid.Row="1" Style="{StaticResource CardList}" ItemTemplate="{StaticResource InboxRowTemplate}"/>
                         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding Visibility, ElementName=InboxEmpty}">
-                            <TextBlock Style="{StaticResource EmptyGlyph}" Text="&#xEA8F;"/>
+                            <local:Icon Style="{StaticResource EmptyGlyph}" Kind="bell"/>
                             <TextBlock x:Name="InboxEmpty" Foreground="{StaticResource SubBrush}" FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="360"/>
                         </StackPanel>
                     </Grid>
@@ -852,7 +852,7 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <DockPanel Margin="0,0,0,8">
-                                <Button DockPanel.Dock="Right" Style="{StaticResource IconBtn}" Content="&#xE710;" Width="28" Height="28" ToolTip="{loc:T 'Новая заметка'}" Click="NoteNew_Click"/>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource IconBtn}" Content="plus" Width="28" Height="28" ToolTip="{loc:T 'Новая заметка'}" Click="NoteNew_Click"/>
                                 <ListBox x:Name="NotesList" Style="{StaticResource ChipList}" ItemTemplate="{StaticResource NoteRowTemplate}" SelectionChanged="NotesList_SelectionChanged"/>
                             </DockPanel>
                             <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="12,10">
@@ -874,24 +874,22 @@
                             </Border>
                             <Border Grid.Row="2" Margin="0,8,0,0" Background="{StaticResource Surface}" CornerRadius="18" Padding="6,2">
                                 <StackPanel Orientation="Horizontal">
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xE8DD;" Command="EditingCommands.ToggleBold" CommandTarget="{Binding ElementName=NoteEditor}" ToolTip="{loc:T 'Жирный'}"/>
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xE8DB;" Command="EditingCommands.ToggleItalic" CommandTarget="{Binding ElementName=NoteEditor}" ToolTip="{loc:T 'Курсив'}"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="bold" Command="EditingCommands.ToggleBold" CommandTarget="{Binding ElementName=NoteEditor}" ToolTip="{loc:T 'Жирный'}"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="italic" Command="EditingCommands.ToggleItalic" CommandTarget="{Binding ElementName=NoteEditor}" ToolTip="{loc:T 'Курсив'}"/>
                                     <Button Style="{StaticResource FmtBtn}" ToolTip="{loc:T 'Зачёркнутый'}" Click="NoteStrike_Click">
                                         <TextBlock Text="S" FontFamily="Segoe UI" FontWeight="SemiBold" TextDecorations="Strikethrough"/>
                                     </Button>
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xE894;" ToolTip="{loc:T 'Убрать форматирование'}" Click="NoteClearFormat_Click"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="eraser" ToolTip="{loc:T 'Убрать форматирование'}" Click="NoteClearFormat_Click"/>
                                     <Border Width="1" Margin="4,6" Background="#26FFFFFF"/>
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xE8FD;" Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=NoteEditor}" ToolTip="{loc:T 'Маркированный список'}"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="list.bullet" Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=NoteEditor}" ToolTip="{loc:T 'Маркированный список'}"/>
                                     <Button Style="{StaticResource FmtBtn}" Command="EditingCommands.ToggleNumbering" CommandTarget="{Binding ElementName=NoteEditor}" ToolTip="{loc:T 'Нумерованный список'}">
                                         <TextBlock Text="1." FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="12"/>
                                     </Button>
-                                    <Button Style="{StaticResource FmtBtn}" ToolTip="{loc:T 'Задачи с галочками'}" Click="NoteChecklist_Click">
-                                        <TextBlock Text="☑" FontFamily="Segoe UI Symbol" FontSize="14"/>
-                                    </Button>
+                                    <Button Style="{StaticResource FmtBtn}" Content="checkmark.square" ToolTip="{loc:T 'Задачи с галочками'}" Click="NoteChecklist_Click"/>
                                     <Border Width="1" Margin="4,6" Background="#26FFFFFF"/>
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xEA8F;" ToolTip="{loc:T 'Напомнить об этой заметке'}" Click="NoteRemind_Click"/>
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xE8C8;" ToolTip="{loc:T 'Скопировать заметку'}" Click="NoteCopy_Click"/>
-                                    <Button Style="{StaticResource FmtBtn}" Content="&#xE74D;" ToolTip="{loc:T 'Удалить заметку'}" Click="NoteDelete_Click"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="bell" ToolTip="{loc:T 'Напомнить об этой заметке'}" Click="NoteRemind_Click"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="doc.on.doc" ToolTip="{loc:T 'Скопировать заметку'}" Click="NoteCopy_Click"/>
+                                    <Button Style="{StaticResource FmtBtn}" Content="trash" ToolTip="{loc:T 'Удалить заметку'}" Click="NoteDelete_Click"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -916,7 +914,7 @@
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
                                             <Button x:Name="TimerStart" Style="{StaticResource StartBtn}" Click="TimerStart_Click">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock x:Name="TimerStartGlyph" Style="{StaticResource Glyph}" Text="&#xE768;" Foreground="#1A1100" FontSize="11"/>
+                                                    <local:Icon x:Name="TimerStartGlyph" Style="{StaticResource Glyph}" Kind="play.fill" Foreground="#1A1100" Size="11"/>
                                                     <TextBlock x:Name="TimerStartLabel" Text="{loc:T 'Старт'}" Foreground="#1A1100" FontSize="12" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -945,7 +943,7 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xEA8F;" FontSize="12" Foreground="{StaticResource SubBrush}"/>
+                                        <local:Icon Style="{StaticResource Glyph}" Kind="bell" Size="12" Foreground="{StaticResource SubBrush}"/>
                                         <TextBlock Text="{loc:T 'Напоминания'}" Foreground="{StaticResource TextBrush}" FontSize="12" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <ListBox x:Name="ReminderList" Grid.Row="1" Style="{StaticResource PlainList}" ItemTemplate="{StaticResource ReminderRowTemplate}" Margin="0,4,0,4"/>
@@ -977,10 +975,10 @@
                                 </Grid.RowDefinitions>
                                 <Grid>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE707;" FontSize="12" Foreground="White"/>
+                                        <local:Icon Style="{StaticResource Glyph}" Kind="location" Size="12" Foreground="White"/>
                                         <TextBlock x:Name="WxCity" Foreground="White" FontSize="13" FontWeight="SemiBold" Margin="5,0,0,0" MaxWidth="120" TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
-                                    <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" Foreground="#CCFFFFFF" HorizontalAlignment="Right" Width="26" Height="26" FontSize="12" ToolTip="{loc:T 'Обновить'}" Click="WeatherRefresh_Click"/>
+                                    <Button Style="{StaticResource IconBtn}" Content="arrow.clockwise" Foreground="#CCFFFFFF" HorizontalAlignment="Right" Width="26" Height="26" FontSize="12" ToolTip="{loc:T 'Обновить'}" Click="WeatherRefresh_Click"/>
                                 </Grid>
                                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
                                     <ContentControl x:Name="WxIcon" Width="40" Height="40" VerticalAlignment="Center" Focusable="False"/>
@@ -1039,7 +1037,7 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <Border x:Name="WifiIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
-                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE701;" HorizontalAlignment="Center"/>
+                                        <local:Icon Style="{StaticResource Glyph}" Kind="wifi" HorizontalAlignment="Center"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="Wi-Fi" FontSize="13" FontWeight="SemiBold"/>
@@ -1051,7 +1049,7 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <Border x:Name="BluetoothIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
-                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE702;" HorizontalAlignment="Center"/>
+                                        <local:Icon Style="{StaticResource Glyph}" Kind="bluetooth" HorizontalAlignment="Center"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="Bluetooth" FontSize="13" FontWeight="SemiBold"/>
@@ -1063,7 +1061,7 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <Border x:Name="ThemeIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
-                                        <TextBlock Text="◐" FontFamily="Segoe UI Symbol" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <local:Icon Style="{StaticResource Glyph}" Kind="circle.lefthalf.filled" HorizontalAlignment="Center"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{loc:T 'Тёмная тема'}" FontSize="13" FontWeight="SemiBold"/>
@@ -1075,7 +1073,7 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <Border x:Name="VpnIcon" Width="38" Height="38" CornerRadius="19" Background="{StaticResource Surface2}" Effect="{StaticResource IconBadgeShadow}">
-                                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE705;" HorizontalAlignment="Center"/>
+                                        <local:Icon Style="{StaticResource Glyph}" Kind="lock.shield" HorizontalAlignment="Center"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="VPN" FontSize="13" FontWeight="SemiBold"/>
@@ -1086,16 +1084,16 @@
                         </UniformGrid>
                         <UniformGrid Grid.Row="1" Columns="4" Margin="0,4,0,0">
                             <Button Style="{StaticResource Tile}" Tag="lock" Click="Power_Click">
-                                <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE72E;" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Блокировка'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
+                                <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="lock" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Блокировка'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
                             </Button>
                             <Button Style="{StaticResource Tile}" Tag="sleep" Click="Power_Click">
-                                <StackPanel><TextBlock Text="☾" FontFamily="Segoe UI Symbol" FontSize="17" Foreground="White" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Сон'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
+                                <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="moon" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Сон'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
                             </Button>
                             <Button Style="{StaticResource Tile}" Tag="restart" Click="Power_Click">
-                                <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE72C;" HorizontalAlignment="Center"/><TextBlock x:Name="RestartLabel" Text="{loc:T 'Перезагрузка'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
+                                <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="arrow.clockwise" HorizontalAlignment="Center"/><TextBlock x:Name="RestartLabel" Text="{loc:T 'Перезагрузка'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
                             </Button>
                             <Button Style="{StaticResource Tile}" Tag="shutdown" Click="Power_Click">
-                                <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE7E8;" HorizontalAlignment="Center"/><TextBlock x:Name="ShutdownLabel" Text="{loc:T 'Выключение'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
+                                <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="power" HorizontalAlignment="Center"/><TextBlock x:Name="ShutdownLabel" Text="{loc:T 'Выключение'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center"/></StackPanel>
                             </Button>
                         </UniformGrid>
                     </Grid>
@@ -1120,7 +1118,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </StackPanel.Style>
-                            <TextBlock Style="{StaticResource EmptyGlyph}" Text="&#xE721;"/>
+                            <local:Icon Style="{StaticResource EmptyGlyph}" Kind="magnifyingglass"/>
                             <TextBlock Text="{loc:T 'Программы, файлы из индекса Windows, вопрос к ИИ или поиск в браузере'}" Foreground="{StaticResource SubBrush}" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="300"/>
                         </StackPanel>
                         <TextBlock Grid.Row="2" Text="{loc:T '↑↓ — выбор · Enter — открыть · Esc — закрыть'}" Foreground="{StaticResource SubBrush}" FontSize="11" Margin="2,8,0,0"/>

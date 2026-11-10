@@ -8,7 +8,7 @@ namespace Island.Services;
 public sealed class AppShortcut
 {
     public string Name { get; set; } = "";
-    public string Glyph { get; set; } = "";
+    public string Glyph { get; set; } = "square.grid.2x2";
     public string Target { get; set; } = "";
 }
 
@@ -57,11 +57,11 @@ public sealed class Settings
     }
     public List<AppShortcut> Shortcuts { get; set; } = new()
     {
-        new AppShortcut { Name = "Проводник", Glyph = "", Target = "explorer.exe" },
-        new AppShortcut { Name = "Терминал", Glyph = "", Target = "wt.exe" },
-        new AppShortcut { Name = "Блокнот", Glyph = "", Target = "notepad.exe" },
-        new AppShortcut { Name = "Калькулятор", Glyph = "", Target = "calc.exe" },
-        new AppShortcut { Name = "Параметры", Glyph = "", Target = "ms-settings:" },
+        new AppShortcut { Name = "Проводник", Glyph = "folder", Target = "explorer.exe" },
+        new AppShortcut { Name = "Терминал", Glyph = "terminal", Target = "wt.exe" },
+        new AppShortcut { Name = "Блокнот", Glyph = "square.and.pencil", Target = "notepad.exe" },
+        new AppShortcut { Name = "Калькулятор", Glyph = "calculator", Target = "calc.exe" },
+        new AppShortcut { Name = "Параметры", Glyph = "gearshape", Target = "ms-settings:" },
     };
 }
 
