@@ -54,6 +54,7 @@ public partial class IslandWindow : Window
     private const double MinimalSize = 18, MinimalTop = 6;
     private const double AlertW = 390, AlertH = 62;
     private const int HotkeyId = 0x1510;
+    private const int HotkeyShotId = 0x1511, HotkeyRecordId = 0x1512;
     private static readonly TimeSpan TypingGrace = TimeSpan.FromSeconds(12);
     private const int IxHome = 0, IxClip = 1, IxInbox = 2, IxNotes = 3, IxWeather = 4, IxControl = 5, IxSearch = 6, IxSettings = 7;
     private static readonly double[] TabHeights = { 395, 375, 375, 395, 395, 275, 395, 395 };
@@ -88,7 +89,6 @@ public partial class IslandWindow : Window
     private DateTime _alertUntil = DateTime.MinValue;
     private DateTime _suppressUntil = DateTime.MinValue;
     private DateTime _lastKeyUtc = DateTime.MinValue;
-    private AlertRequest? _pending;
     private AlertRequest? _currentAlert;
     private Action? _alertAction;
     private bool _timerChipShown, _coverShown, _recChipShown;
@@ -200,6 +200,8 @@ public partial class IslandWindow : Window
         }
 
         HotkeyHint.Text = _hotkeyLabel.Length == 0 ? "" : Loc.F("{0} — поиск", _hotkeyLabel);
+        Native.RegisterHotKey(_hwnd, HotkeyShotId, Native.MOD_CONTROL | Native.MOD_ALT | Native.MOD_NOREPEAT, Native.VK_S);
+        Native.RegisterHotKey(_hwnd, HotkeyRecordId, Native.MOD_CONTROL | Native.MOD_ALT | Native.MOD_NOREPEAT, Native.VK_R);
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -208,6 +210,15 @@ public partial class IslandWindow : Window
         {
             case Native.WM_HOTKEY when wParam.ToInt32() == HotkeyId:
                 HotkeyPressed();
+                handled = true;
+                break;
+            case Native.WM_HOTKEY when wParam.ToInt32() == HotkeyShotId:
+                if (!_toolBusy) _ = RunScreenToolAsync("area");
+                handled = true;
+                break;
+            case Native.WM_HOTKEY when wParam.ToInt32() == HotkeyRecordId:
+                if (IsRecording) StopRecording();
+                else if (!_toolBusy) _ = StartRecordingAsync(area: false);
                 handled = true;
                 break;
             case Native.WM_CLIPBOARDUPDATE:
@@ -232,7 +243,17 @@ public partial class IslandWindow : Window
         _weatherTimer.Stop();
         _uiTimer.Stop();
         FlushNote();
+        _noteTimer.Stop();
+        _searchTimer.Stop();
+        _inboxTimer.Stop();
+        _timerTick.Stop();
+        _reminderTick.Stop();
+        _recTick.Stop();
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
         Native.UnregisterHotKey(_hwnd, HotkeyId);
+        Native.UnregisterHotKey(_hwnd, HotkeyShotId);
+        Native.UnregisterHotKey(_hwnd, HotkeyRecordId);
         Native.RemoveClipboardFormatListener(_hwnd);
         _notify.Dispose();
         _reloadTimer.Stop();
@@ -436,18 +457,13 @@ public partial class IslandWindow : Window
         SetState(State.Collapsed);
         if (wasActive && _lastExternal != IntPtr.Zero) Native.SetForegroundWindow(_lastExternal);
 
-        if (_pending is { } p)
-        {
-            _pending = null;
-            ShowAlert(p);
-        }
     }
 
     /// <summary>
     /// Shows a banner on the island. <paramref name="sound"/> plays with it; <paramref name="onClick"/> makes the banner
     /// clickable (hovering it then keeps it instead of opening the panel). In game mode the banner waits for the game to close.
     /// </summary>
-    public void ShowAlert(string title, string message, int ms = 2400, string glyph = "exclamationmark.triangle", string? tag = null,
+    public void ShowAlert(string title, string message, int ms = 2400, string glyph = "checkmark", string? tag = null,
         Brush? iconBrush = null, System.Media.SystemSound? sound = null, Action? onClick = null) =>
         ShowAlert(new AlertRequest(title, message, ms, glyph, tag, iconBrush, sound, onClick));
 
@@ -459,13 +475,14 @@ public partial class IslandWindow : Window
             return;
         }
 
-        alert.Sound?.Play();
-        alert = alert with { Sound = null };
         if (_state == State.Expanded)
         {
-            _pending = alert;
+            DeferAlert(alert);
             return;
         }
+
+        alert.Sound?.Play();
+        alert = alert with { Sound = null };
 
         AlertTitle.Inlines.Clear();
         AlertTitle.Inlines.Add(new System.Windows.Documents.Run(alert.Title));
@@ -837,7 +854,7 @@ public partial class IslandWindow : Window
         }
         catch (Exception ex)
         {
-            ShowAlert(Loc.T("Не получилось"), ex.Message.Length > 80 ? ex.Message[..80] : ex.Message);
+            ShowAlert(Loc.T("Не получилось"), ex.Message.Length > 80 ? ex.Message[..80] : ex.Message, glyph: "exclamationmark.triangle");
         }
     }
 
@@ -847,7 +864,7 @@ public partial class IslandWindow : Window
         Collapse();
         if (string.IsNullOrEmpty(text))
         {
-            ShowAlert(Loc.T("В буфере нет текста"), "");
+            ShowAlert(Loc.T("В буфере нет текста"), "", glyph: "exclamationmark.triangle");
             return;
         }
 
@@ -857,7 +874,7 @@ public partial class IslandWindow : Window
 
     private async Task RunScreenToolAsync(string tool)
     {
-        (string Title, string Message)? result = null;
+        (string Title, string Message, bool Error)? result = null;
         _toolBusy = true;
         try
         {
@@ -872,7 +889,7 @@ public partial class IslandWindow : Window
                 {
                     ClipboardUtil.SetImage(ScreenTools.ToBitmapSource(shot));
                     var path = ScreenTools.SavePng(shot);
-                    result = (Loc.T("Снимок экрана скопирован"), Path.GetFileName(path));
+                    result = (Loc.T("Снимок экрана скопирован"), Path.GetFileName(path), false);
                     break;
                 }
                 case "area":
@@ -882,7 +899,7 @@ public partial class IslandWindow : Window
                         using var crop = ScreenTools.Crop(shot, area);
                         ClipboardUtil.SetImage(ScreenTools.ToBitmapSource(crop));
                         var path = ScreenTools.SavePng(crop);
-                        result = (Loc.T("Скриншот скопирован"), Path.GetFileName(path));
+                        result = (Loc.T("Скриншот скопирован"), Path.GetFileName(path), false);
                     }
 
                     break;
@@ -895,13 +912,13 @@ public partial class IslandWindow : Window
                         var text = (await ScreenTools.OcrAsync(crop))?.Trim();
                         if (string.IsNullOrEmpty(text))
                         {
-                            result = (Loc.T("Текст не найден"), Loc.T("Выделите область покрупнее"));
+                            result = (Loc.T("Текст не найден"), Loc.T("Выделите область покрупнее"), true);
                         }
                         else
                         {
                             SilentSetClipboard(text);
                             _clips.Add(text, "Текст с экрана");
-                            result = (Loc.T("Текст скопирован"), text.Replace('\n', ' ').Length > 60 ? text.Replace('\n', ' ')[..60] + "…" : text.Replace('\n', ' '));
+                            result = (Loc.T("Текст скопирован"), text.Replace('\n', ' ').Length > 60 ? text.Replace('\n', ' ')[..60] + "…" : text.Replace('\n', ' '), false);
                         }
                     }
 
@@ -917,7 +934,7 @@ public partial class IslandWindow : Window
                     {
                         SilentSetClipboard(hex);
                         _clips.Add(hex, "Пипетка");
-                        result = (Loc.T("Цвет скопирован"), hex);
+                        result = (Loc.T("Цвет скопирован"), hex, false);
                     }
 
                     break;
@@ -926,17 +943,21 @@ public partial class IslandWindow : Window
         }
         catch (Exception ex)
         {
-            result = (Loc.T("Не получилось"), ex.Message.Length > 80 ? ex.Message[..80] : ex.Message);
+            result = (Loc.T("Не получилось"), ex.Message.Length > 80 ? ex.Message[..80] : ex.Message, true);
         }
         finally
         {
             _overlayOpen = false;
             _toolBusy = false;
-            Show();
-            PositionWindow();
+            // In game mode the island stays hidden; the next game-mode check shows it when the game closes.
+            if (!_gameHidden)
+            {
+                Show();
+                PositionWindow();
+            }
         }
 
-        if (result is { } r) ShowAlert(r.Title, r.Message);
+        if (result is { } r) ShowAlert(r.Title, r.Message, glyph: r.Error ? "exclamationmark.triangle" : "checkmark");
     }
 
     private Drawing.Rectangle? PickRegion(Drawing.Bitmap shot, Drawing.Rectangle bounds)
@@ -1174,6 +1195,7 @@ public partial class IslandWindow : Window
     private async Task RunSearchAsync(string query)
     {
         _searchCts?.Cancel();
+        _searchCts?.Dispose();
         var cts = _searchCts = new CancellationTokenSource();
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -1241,7 +1263,11 @@ public partial class IslandWindow : Window
     private void StartNotifyServer()
     {
         _notify.Notified += (title, message) =>
-            Dispatcher.BeginInvoke(new Action(() => ShowAlert(title, message, 10000, "bubble.left")));
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_settings.DoNotDisturb) return;
+                ShowAlert(title, message, 10000, "bubble.left");
+            }));
         _notify.Start(_settings.NotifyPort);
     }
 }

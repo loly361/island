@@ -17,12 +17,21 @@ public partial class App : Application
     private Mutex? _mutex;
     private Forms.NotifyIcon? _tray;
     private IslandWindow? _window;
+    private EventWaitHandle? _openSignal;
+    private const string OpenSignalName = "Island.Open.9d1f";
 
     protected override void OnStartup(StartupEventArgs e)
     {
         _mutex = new Mutex(true, "Island.SingleInstance.9d1f", out var isFirst);
         if (!isFirst)
         {
+            // A second launch asks the running copy to open its panel instead of doing nothing.
+            if (EventWaitHandle.TryOpenExisting(OpenSignalName, out var open))
+            {
+                open.Set();
+                open.Dispose();
+            }
+
             Shutdown();
             return;
         }
@@ -57,6 +66,21 @@ public partial class App : Application
         _window = new IslandWindow(settings, clips, notes);
         _window.Show();
         BuildTray(settings);
+        _openSignal = new EventWaitHandle(false, EventResetMode.AutoReset, OpenSignalName);
+        var signal = _openSignal;
+        new Thread(() =>
+        {
+            try
+            {
+                while (signal.WaitOne())
+                    Dispatcher.BeginInvoke(new Action(() => _window?.OpenHome()));
+            }
+            catch (ObjectDisposedException)
+            {
+                // The app is exiting.
+            }
+        })
+        { IsBackground = true, Name = "Island.OpenSignal" }.Start();
         // Log-off or shutdown while recording: finish the MP4 before Windows ends the process.
         SessionEnding += (_, _) => _window?.FinishRecordingNow();
     }
@@ -84,6 +108,11 @@ public partial class App : Application
         };
         menu.Items.Add(inbox);
 
+        var dnd = new Forms.ToolStripMenuItem(Loc.T("Не беспокоить"));
+        dnd.Click += (_, _) => _window?.SetDoNotDisturb(!(_window?.DoNotDisturb ?? false));
+        menu.Items.Add(dnd);
+        menu.Opening += (_, _) => dnd.Checked = _window?.DoNotDisturb == true;
+
         menu.Items.Add(Loc.T("Папка с данными"), null, (_, _) =>
         {
             Directory.CreateDirectory(AppPaths.DataDir);
@@ -94,7 +123,7 @@ public partial class App : Application
 
         _tray = new Forms.NotifyIcon
         {
-            Icon = MakeIcon(),
+            Icon = TrayIcon(),
             Text = "Island",
             Visible = true,
             ContextMenuStrip = menu,
@@ -115,12 +144,57 @@ public partial class App : Application
         Shutdown();
     }
 
+    /// <summary>Starts a fresh copy and exits; used after the language was changed.</summary>
+    public void Restart()
+    {
+        var exe = Environment.ProcessPath;
+        if (exe is null) return;
+        if (_tray is not null)
+        {
+            _tray.Visible = false;
+            _tray.Dispose();
+            _tray = null;
+        }
+
+        // Close first, so the hotkey and the notify port are free before the new copy starts.
+        _window?.Close();
+        _window = null;
+        try { _mutex?.ReleaseMutex(); } catch { }
+        _mutex?.Dispose();
+        _mutex = null;
+        try
+        {
+            Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false });
+        }
+        catch (Exception ex)
+        {
+            LogError(ex);
+        }
+
+        Shutdown();
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
         _tray?.Dispose();
         try { _mutex?.ReleaseMutex(); } catch { }
         _mutex?.Dispose();
+        _openSignal?.Dispose();
         base.OnExit(e);
+    }
+
+    private static Drawing.Icon TrayIcon()
+    {
+        try
+        {
+            if (Environment.ProcessPath is { } path && Drawing.Icon.ExtractAssociatedIcon(path) is { } icon) return icon;
+        }
+        catch
+        {
+            // Fall back to the drawn icon.
+        }
+
+        return MakeIcon();
     }
 
     private static Drawing.Icon MakeIcon()
@@ -137,7 +211,16 @@ public partial class App : Application
             g.FillEllipse(dot, 12, 6, 8, 8);
         }
 
-        return Drawing.Icon.FromHandle(bmp.GetHicon());
+        var handle = bmp.GetHicon();
+        try
+        {
+            using var temp = Drawing.Icon.FromHandle(handle);
+            return (Drawing.Icon)temp.Clone();
+        }
+        finally
+        {
+            Native.DestroyIcon(handle);
+        }
     }
 
     internal static void LogError(Exception ex)

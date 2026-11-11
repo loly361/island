@@ -94,14 +94,17 @@ public partial class IslandWindow
         finally
         {
             _toolBusy = false;
-            Show();
-            PositionWindow();
+            if (!_gameHidden)
+            {
+                Show();
+                PositionWindow();
+            }
         }
 
         if (region is not { } r)
         {
             _recordStarting = false;
-            if (problem is not null) ShowAlert(Loc.T("Не удалось начать запись"), Shorten(problem));
+            if (problem is not null) ShowAlert(Loc.T("Не удалось начать запись"), Shorten(problem), glyph: "exclamationmark.triangle");
             return;
         }
 
@@ -119,7 +122,7 @@ public partial class IslandWindow
         {
             SetCaptureExcluded(false);
             if (ex is not RecordingStartException) App.LogError(ex);
-            ShowAlert(Loc.T("Не удалось начать запись"), Shorten(ex.Message));
+            ShowAlert(Loc.T("Не удалось начать запись"), Shorten(ex.Message), glyph: "exclamationmark.triangle");
         }
         finally
         {
@@ -153,7 +156,7 @@ public partial class IslandWindow
 
         if (result.Error is { } error) App.LogError(error);
         var message = note ?? (result.Error is null ? Loc.T("Запись слишком короткая") : Shorten(result.Error.Message));
-        ShowAlert(Loc.T("Не удалось сохранить запись"), message);
+        ShowAlert(Loc.T("Не удалось сохранить запись"), message, glyph: "exclamationmark.triangle");
     }
 
     /// <summary>The recorded rectangle no longer matches the screen; finish the file with what was recorded so far.</summary>

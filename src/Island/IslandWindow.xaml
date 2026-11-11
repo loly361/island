@@ -618,6 +618,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Grid Width="36" Height="36" VerticalAlignment="Top">
                     <Border CornerRadius="11" Background="{DynamicResource AccentBrush}" Opacity="0.22"/>
@@ -628,6 +629,7 @@
                     <TextBlock Text="{Binding Body}" Foreground="{StaticResource SubBrush}" FontSize="12" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="34"/>
                     <TextBlock Text="{Binding Meta}" Foreground="#59FFFFFF" FontSize="10" Margin="0,2,0,0"/>
                 </StackPanel>
+                <Button Style="{StaticResource IconBtn}" Content="speaker.xmark" Grid.Column="2" Width="26" Height="26" FontSize="12" VerticalAlignment="Center" Margin="6,0,0,0" ToolTip="{loc:T 'Баннеры от этой программы: выключить или включить'}" Click="InboxMute_Click"/>
             </Grid>
         </DataTemplate>
     </Window.Resources>
@@ -672,7 +674,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="AlertIcon" Width="34" Height="34" CornerRadius="10" Background="{DynamicResource AccentBrush}" VerticalAlignment="Center">
-                    <local:Icon x:Name="AlertGlyph" Style="{StaticResource Glyph}" Kind="exclamationmark.triangle" Foreground="White" HorizontalAlignment="Center"/>
+                    <local:Icon x:Name="AlertGlyph" Style="{StaticResource Glyph}" Kind="exclamationmark.triangle" Foreground="White" Effect="{x:Null}" HorizontalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="AlertTitle" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -771,7 +773,7 @@
                             </Border>
                             <Grid Grid.Column="1" Margin="6,0,0,0">
                             <UniformGrid x:Name="ToolTiles" Columns="3" Rows="3">
-                                <Button Style="{StaticResource Tile}" Tag="area" Click="Action_Click">
+                                <Button Style="{StaticResource Tile}" Tag="area" ToolTip="Ctrl+Alt+S" Click="Action_Click">
                                     <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="crop" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Область'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource Tile}" Tag="full" Click="Action_Click">
@@ -789,7 +791,7 @@
                                 <Button Style="{StaticResource Tile}" Tag="folder" Click="Action_Click">
                                     <StackPanel><local:Icon Style="{StaticResource Glyph}" Kind="folder" HorizontalAlignment="Center"/><TextBlock Text="{loc:T 'Скриншоты'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
-                                <Button x:Name="RecordTile" Style="{StaticResource Tile}" Click="Record_Click">
+                                <Button x:Name="RecordTile" Style="{StaticResource Tile}" ToolTip="Ctrl+Alt+R" Click="Record_Click">
                                     <StackPanel><local:Icon x:Name="RecordTileGlyph" Style="{StaticResource Glyph}" Kind="record.circle" HorizontalAlignment="Center"/><TextBlock x:Name="RecordTileLabel" Text="{loc:T 'Запись экрана'}" FontSize="11" Margin="0,5,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/></StackPanel>
                                 </Button>
                                 <Button Style="{StaticResource Tile}" Tag="videos" Click="Action_Click">
@@ -1181,6 +1183,7 @@
                                         <Button x:Name="LanguageEnButton" Style="{StaticResource PresetBtn}" Content="English" Tag="en" Click="Language_Click"/>
                                     </WrapPanel>
                                     <TextBlock Text="{loc:T 'Язык изменится после перезапуска.'}" Foreground="{StaticResource SubBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                    <Button x:Name="RestartButton" Style="{StaticResource PresetBtn}" Content="{loc:T 'Перезапустить сейчас'}" HorizontalAlignment="Left" Margin="0,8,0,0" Visibility="Collapsed" Click="Restart_Click"/>
                                 </StackPanel>
                             </Border>
 
@@ -1207,6 +1210,29 @@
                                         <Button x:Name="GameModeButton" Grid.Column="1" Style="{StaticResource PresetBtn}" MinWidth="56" Margin="8,0,0,0" Click="GameMode_Click"/>
                                     </Grid>
                                     <TextBlock Text="{loc:T 'Уведомления, напоминания и таймер покажутся, когда полноэкранное окно закроется или свернётся.'}" Foreground="{StaticResource SubBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource CardRadius}" Padding="14,12" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="{loc:T 'УВЕДОМЛЕНИЯ'}" Foreground="{StaticResource SubBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{loc:T 'Не беспокоить'}" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        <Button x:Name="DndButton" Grid.Column="1" Style="{StaticResource PresetBtn}" MinWidth="56" Margin="8,0,0,0" Click="Dnd_Click"/>
+                                    </Grid>
+                                    <TextBlock Text="{loc:T 'Баннеры уведомлений Windows и других программ не показываются. Таймер и напоминания работают как обычно.'}" Foreground="{StaticResource SubBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="MutedAppsText" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        <Button x:Name="MutedClearButton" Grid.Column="1" Style="{StaticResource PresetBtn}" Content="{loc:T 'Сбросить'}" Margin="8,0,0,0" Click="MutedClear_Click"/>
+                                    </Grid>
                                 </StackPanel>
                             </Border>
 

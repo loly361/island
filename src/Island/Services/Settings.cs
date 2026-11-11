@@ -35,6 +35,10 @@ public sealed class Settings
     public string? DismissedUpdateVersion { get; set; }
     /// <summary>Hide the island while a game or another full-screen window is in front; alerts wait until it closes.</summary>
     public bool GameMode { get; set; } = true;
+    /// <summary>Apps whose Windows notifications stay in the list but show no banner.</summary>
+    public List<string> MutedApps { get; set; } = new();
+    /// <summary>No banners for Windows notifications and external programs; the timer and reminders still show.</summary>
+    public bool DoNotDisturb { get; set; }
 
     public const string ModeStandard = "standard";
     public const string ModeMinimal = "minimal";
@@ -56,6 +60,8 @@ public sealed class Settings
         AutoUpdateCheck = other.AutoUpdateCheck;
         DismissedUpdateVersion = other.DismissedUpdateVersion;
         GameMode = other.GameMode;
+        MutedApps = other.MutedApps;
+        DoNotDisturb = other.DoNotDisturb;
         Shortcuts = other.Shortcuts;
     }
     public List<AppShortcut> Shortcuts { get; set; } = new()

@@ -63,12 +63,15 @@ public partial class IslandWindow
         var fresh = JsonStore.TryLoad<Settings>(AppPaths.File("settings.json"));
         if (fresh is null) return;
 
+        var inboxWas = _settings.NotificationsEnabled;
         _settings.CopyFrom(fresh);
+        if (_settings.NotificationsEnabled != inboxWas) _ = SetInboxEnabledAsync(_settings.NotificationsEnabled);
         _ = RefreshAccentAsync(animate: true);
         RenderModeButtons();
         RenderLanguageButtons();
         RenderUpdateCard();
         RenderGameModeButton();
+        RenderNotificationSettings();
         ApplyMode();
         CheckGameMode();
     }
@@ -87,6 +90,7 @@ public partial class IslandWindow
         RenderLanguageButtons();
         RenderUpdateCard();
         RenderGameModeButton();
+        RenderNotificationSettings();
     }
 
     /// <summary>Highlights the saved language; the running window keeps the language it started with until a restart.</summary>
@@ -96,6 +100,7 @@ public partial class IslandWindow
         StyleModeButton(LanguageRuButton, language == Loc.Russian);
         StyleModeButton(LanguageFrButton, language == Loc.French);
         StyleModeButton(LanguageEnButton, language == Loc.English);
+        RestartButton.Visibility = language == Loc.Normalize(Loc.Language) ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void Language_Click(object sender, RoutedEventArgs e)
@@ -106,6 +111,8 @@ public partial class IslandWindow
         JsonStore.Save(AppPaths.File("settings.json"), _settings);
         RenderLanguageButtons();
     }
+
+    private void Restart_Click(object sender, RoutedEventArgs e) => (Application.Current as App)?.Restart();
 
     private void RenderModeButtons()
     {
@@ -187,6 +194,16 @@ public partial class IslandWindow
         if (box == SetCity)
         {
             _settings.City = text.Length == 0 ? null : text;
+            weatherChanged = true;
+        }
+        else if (box == SetLatitude && text.Length == 0)
+        {
+            _settings.Latitude = null;
+            weatherChanged = true;
+        }
+        else if (box == SetLongitude && text.Length == 0)
+        {
+            _settings.Longitude = null;
             weatherChanged = true;
         }
         else if (box == SetLatitude && TryCoordinate(text, 90, out var latitude))

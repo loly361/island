@@ -33,6 +33,7 @@ DefaultDirName={localappdata}\Programs\Island
 DisableProgramGroupPage=yes
 DisableDirPage=auto
 DisableReadyPage=no
+SetupIconFile=..\src\Island\Assets\Island.ico
 UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
 ArchitecturesAllowed=x64compatible
@@ -227,6 +228,19 @@ begin
   // Silent mode (updater) also closes the copy in the install folder directly.
   if WizardSilent then
     CloseIslandAt(ExpandConstant('{app}\{#AppExe}'));
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Current: String;
+begin
+  { Interactive install with the autostart checkbox cleared: drop a stale Run\Island value that points to this copy. }
+  if (CurStep = ssPostInstall) and (not WizardSilent) and (not WizardIsTaskSelected('autostart')) then
+  begin
+    if RegQueryStringValue(HKEY_CURRENT_USER, RunKey, 'Island', Current) then
+      if CompareText(Current, '"' + ExpandConstant('{app}\{#AppExe}') + '"') = 0 then
+        RegDeleteValue(HKEY_CURRENT_USER, RunKey, 'Island');
+  end;
 end;
 
 function InitializeUninstall: Boolean;

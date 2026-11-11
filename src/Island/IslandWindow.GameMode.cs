@@ -75,12 +75,6 @@ public partial class IslandWindow
         {
             // A banner that is on screen right now is not lost: it comes back after the game.
             if (_state == State.Alert && _currentAlert is { } shown && DateTime.UtcNow < _alertUntil) _deferred.AddFirst(shown);
-            if (_pending is { } waiting)
-            {
-                _deferred.AddLast(waiting);
-                _pending = null;
-            }
-
             _gameRestoreExpanded = _state == State.Expanded && _pinned;
             if (_state != State.Collapsed)
             {

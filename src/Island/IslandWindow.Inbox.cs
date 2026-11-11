@@ -13,6 +13,7 @@ public sealed class InboxRow
     public string Title { get; init; } = "";
     public string Body { get; init; } = "";
     public string Meta { get; init; } = "";
+    public string App { get; init; } = "";
 }
 
 /// <summary>Shows Windows notifications as a banner on the island and keeps a short in-memory inbox.</summary>
@@ -62,14 +63,24 @@ public partial class IslandWindow
     private void OnInboxArrived(InboxItem item)
     {
         if (!_settings.NotificationsEnabled) return;
-        ShowAlert(item.Title, item.Body, 6000, "bell", item.App, InboxIconBrush);
+        if (_settings.DoNotDisturb || NotificationRules.IsMuted(_settings.MutedApps, item.App)) return;
+        var tag = string.Equals(item.Title.Trim(), item.App.Trim(), StringComparison.OrdinalIgnoreCase) ? null : item.App;
+        ShowAlert(item.Title, item.Body, 6000, "bell", tag, InboxIconBrush);
     }
 
     private void RenderInbox()
     {
         var now = DateTime.Now;
         var rows = _inbox.Items
-            .Select(i => new InboxRow { Title = i.Title, Body = i.Body, Meta = $"{i.App} · {TimeLabels.Ago(i.Time, now)}" })
+            .Select(i => new InboxRow
+            {
+                Title = i.Title,
+                Body = i.Body,
+                App = i.App,
+                Meta = NotificationRules.IsMuted(_settings.MutedApps, i.App)
+                    ? $"{i.App} · {Loc.T("без баннеров")} · {TimeLabels.Ago(i.Time, now)}"
+                    : $"{i.App} · {TimeLabels.Ago(i.Time, now)}",
+            })
             .ToList();
         InboxList.ItemsSource = rows;
         InboxEmpty.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -86,5 +97,44 @@ public partial class IslandWindow
     {
         _inbox.Clear();
         RenderInbox();
+    }
+
+    private void InboxMute_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not FrameworkElement { DataContext: InboxRow row } || string.IsNullOrWhiteSpace(row.App)) return;
+        NotificationRules.ToggleMuted(_settings.MutedApps, row.App);
+        JsonStore.Save(AppPaths.File("settings.json"), _settings);
+        RenderInbox();
+    }
+
+    private void RenderNotificationSettings()
+    {
+        DndButton.Content = _settings.DoNotDisturb ? Loc.T("Вкл") : Loc.T("Выкл");
+        StyleModeButton(DndButton, _settings.DoNotDisturb);
+        var muted = _settings.MutedApps;
+        MutedAppsText.Text = muted.Count == 0
+            ? Loc.T("Программы без баннеров не выбраны. Выключить баннеры программы можно на вкладке уведомлений.")
+            : Loc.F("Без баннеров: {0}", string.Join(", ", muted));
+        MutedClearButton.Visibility = muted.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void Dnd_Click(object sender, RoutedEventArgs e) => SetDoNotDisturb(!_settings.DoNotDisturb);
+
+    public bool DoNotDisturb => _settings.DoNotDisturb;
+
+    /// <summary>Also used by the tray menu; persists the choice.</summary>
+    public void SetDoNotDisturb(bool on)
+    {
+        _settings.DoNotDisturb = on;
+        JsonStore.Save(AppPaths.File("settings.json"), _settings);
+        RenderNotificationSettings();
+    }
+
+    private void MutedClear_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.MutedApps.Clear();
+        JsonStore.Save(AppPaths.File("settings.json"), _settings);
+        RenderNotificationSettings();
     }
 }

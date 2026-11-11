@@ -40,9 +40,13 @@ Screen recording: the "Screen recording" tile, then "Area" (select with the mous
 
 Game mode (on by default, switch in Settings): while a full-screen window is open on the primary monitor (a game, a full-screen video, a presentation), the island hides, does not expand on hover and shows no banners or sounds. Notifications stay in the list, and banners for the timer, reminders and notifications queue up and are shown one by one (with sound) as soon as the full-screen window is closed or minimised. Maximised ordinary windows with a title bar, the desktop, Alt+Tab and Start are not treated as full-screen. A running screen recording is not interrupted by game mode. "Open" in the tray menu shows the island even above a full-screen window.
 
+Do not disturb (Settings or the tray menu): no banners for Windows notifications and for programs that post to the island; the timer and reminders still show. On the Notifications tab the speaker button next to a notification turns banners from that app off or on; such notifications still appear in the list.
+
 Reminders are written as an ordinary phrase, in Russian, French or English: "call mom tomorrow at 9", "pills every day at 23:00", "in 20 minutes turn off the stove", "friday at 6:30pm meeting". When the time comes the island shows a banner and plays a sound.
 
 `Esc` closes the panel. The pin icon at the top right keeps the panel open.
+
+Hotkeys: `Ctrl+Alt+S` takes an area screenshot, `Ctrl+Alt+R` starts a full-screen recording or stops the current one. If another program already uses a combination, it simply does not work in Island.
 
 ## Claude Code notifications
 

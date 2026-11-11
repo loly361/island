@@ -164,8 +164,9 @@ public partial class IslandWindow
         {
             installer = await _updater.DownloadAsync(release, progress, _updateCts.Token);
         }
-        catch (UpdateIntegrityException)
+        catch (UpdateIntegrityException ex)
         {
+            App.LogError(ex);
             downloading = false;
             _updateBusy = false;
             SetUpdateStatus(Loc.T("Файл обновления повреждён или подменён"));

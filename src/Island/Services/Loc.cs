@@ -353,6 +353,14 @@ public static class Loc
         ["РЕЖИМ ДЛЯ ИГР"] = "MODE JEU",
         ["Прятать остров в играх и полноэкранных окнах"] = "Masquer l'île dans les jeux et les fenêtres plein écran",
         ["Уведомления, напоминания и таймер покажутся, когда полноэкранное окно закроется или свернётся."] = "Les notifications, rappels et minuteur s'afficheront quand la fenêtre plein écran sera fermée ou réduite.",
+        ["без баннеров"] = "sans bannières",
+        ["Баннеры от этой программы: выключить или включить"] = "Bannières de cette application : désactiver ou activer",
+        ["УВЕДОМЛЕНИЯ"] = "NOTIFICATIONS",
+        ["Не беспокоить"] = "Ne pas déranger",
+        ["Баннеры уведомлений Windows и других программ не показываются. Таймер и напоминания работают как обычно."] = "Les bannières des notifications Windows et des autres programmes ne s'affichent pas. Le minuteur et les rappels fonctionnent comme d'habitude.",
+        ["Программы без баннеров не выбраны. Выключить баннеры программы можно на вкладке уведомлений."] = "Aucune application sans bannières. Vous pouvez désactiver les bannières d'une application dans l'onglet des notifications.",
+        ["Без баннеров: {0}"] = "Sans bannières : {0}",
+        ["Перезапустить сейчас"] = "Redémarrer maintenant",
     };
 
     private static readonly Dictionary<string, string> EnglishText = new(StringComparer.Ordinal)
@@ -622,6 +630,14 @@ public static class Loc
         ["РЕЖИМ ДЛЯ ИГР"] = "GAME MODE",
         ["Прятать остров в играх и полноэкранных окнах"] = "Hide the island in games and full-screen windows",
         ["Уведомления, напоминания и таймер покажутся, когда полноэкранное окно закроется или свернётся."] = "Notifications, reminders and the timer show up once the full-screen window is closed or minimized.",
+        ["без баннеров"] = "no banners",
+        ["Баннеры от этой программы: выключить или включить"] = "Banners from this app: turn off or on",
+        ["УВЕДОМЛЕНИЯ"] = "NOTIFICATIONS",
+        ["Не беспокоить"] = "Do not disturb",
+        ["Баннеры уведомлений Windows и других программ не показываются. Таймер и напоминания работают как обычно."] = "Banners for Windows notifications and other programs are not shown. The timer and reminders work as usual.",
+        ["Программы без баннеров не выбраны. Выключить баннеры программы можно на вкладке уведомлений."] = "No apps without banners. You can turn off an app's banners on the notifications tab.",
+        ["Без баннеров: {0}"] = "No banners: {0}",
+        ["Перезапустить сейчас"] = "Restart now",
     };
 }
 
